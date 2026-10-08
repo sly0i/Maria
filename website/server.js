@@ -953,6 +953,33 @@ function applyBrandToHtml(html) {
   return html;
 }
 
+function noCache(res) {
+  res.setHeader("Cache-Control", "no-store, no-cache, must-revalidate, max-age=0");
+  res.setHeader("Pragma", "no-cache");
+  res.setHeader("Expires", "0");
+  res.setHeader("CDN-Cache-Control", "no-store");
+  res.setHeader("Cloudflare-CDN-Cache-Control", "no-store");
+  res.setHeader("Surrogate-Control", "no-store");
+}
+
+function assetVersion(filePath) {
+  try {
+    return String(fs.statSync(filePath).mtimeMs | 0);
+  } catch {
+    return String(Date.now());
+  }
+}
+
+function bustScriptUrls(html) {
+  return html.replace(
+    /(<script\s+src=")(\/[^"?]+\.js)(\?[^"]*)?(")/gi,
+    (_m, pre, src, _qs, post) => {
+      const filePath = path.join(__dirname, src.replace(/^\//, ""));
+      return `${pre}${src}?v=${assetVersion(filePath)}${post}`;
+    }
+  );
+}
+
 function sendHtmlWithInlineCss(res, htmlPath, cssPath = path.join(__dirname, "styles.css")) {
   try {
     let html = fs.readFileSync(htmlPath, "utf8");
@@ -970,8 +997,10 @@ function sendHtmlWithInlineCss(res, htmlPath, cssPath = path.join(__dirname, "st
     if (htmlPath.endsWith("index.html") || htmlPath.endsWith("watch.html")) {
       html = applyBrandToHtml(html);
     }
+    // Cache-bust JS so a normal refresh (no private browsing) always gets the latest scripts
+    html = bustScriptUrls(html);
     res.setHeader("Content-Type", "text/html; charset=utf-8");
-    res.setHeader("Cache-Control", "no-store");
+    noCache(res);
     res.send(html);
   } catch (err) {
     console.error(err);
@@ -981,25 +1010,25 @@ function sendHtmlWithInlineCss(res, htmlPath, cssPath = path.join(__dirname, "st
 
 app.get("/app.js", (_req, res) => {
   res.type("application/javascript");
-  res.setHeader("Cache-Control", "no-store");
+  noCache(res);
   res.sendFile(path.join(__dirname, "app.js"));
 });
 
 app.get("/auth.js", (_req, res) => {
   res.type("application/javascript");
-  res.setHeader("Cache-Control", "no-store");
+  noCache(res);
   res.sendFile(path.join(__dirname, "auth.js"));
 });
 
 app.get("/watch.js", (_req, res) => {
   res.type("application/javascript");
-  res.setHeader("Cache-Control", "no-store");
+  noCache(res);
   res.sendFile(path.join(__dirname, "watch.js"));
 });
 
 app.get("/styles.css", (_req, res) => {
   res.type("text/css");
-  res.setHeader("Cache-Control", "no-store");
+  noCache(res);
   res.sendFile(path.join(__dirname, "styles.css"));
 });
 

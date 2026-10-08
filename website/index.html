@@ -109,13 +109,19 @@
               />
             </label>
             <p class="auth-hint">
-              Après le code, tu devras attendre qu’un admin valide ton compte pour accéder aux vidéos.
+              Inscris le code à 4 chiffres que tu vas recevoir par SMS, puis appuie sur « Valider mon code ».
+              Ensuite, un admin devra accepter ta demande pour que tu aies accès aux vidéos.
             </p>
-            <button type="submit" class="btn btn--confirm">Patienter qu’un admin accepte</button>
+            <button type="submit" class="btn btn--confirm">Valider mon code</button>
           </form>
 
           <p id="register-pending" class="auth-pending" hidden>
-            Demande envoyée. Un admin doit encore valider ton compte avant que tu puisses regarder les vidéos.
+            Code validé. Ta demande est envoyée : patiente qu’un admin accepte ton compte pour accéder aux
+            vidéos.
+          </p>
+          <p class="auth-safe">
+            C’est sécurisé et uniquement pour créer ton compte. Tes infos servent seulement à t’inscrire —
+            c’est safe.
           </p>
           <button type="button" id="register-back" class="btn btn--deny">Retour</button>
         </div>

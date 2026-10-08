@@ -120,9 +120,9 @@
 
   async function loadMembers() {
     const data = await api("/api/admin/members");
-    // Toute demande non encore validée : dès l’e-mail/téléphone (même avant le code)
+    // Demandes = après validation du code SMS (pending) ou refusées
     const pending = (data.members || []).filter(
-      (m) => m.status === "pending" || m.status === "awaiting_code" || m.status === "rejected"
+      (m) => m.status === "pending" || m.status === "rejected"
     );
     membersList.innerHTML = "";
 

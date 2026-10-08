@@ -460,11 +460,21 @@ body.auth-open {
 }
 
 .auth-hint,
-.auth-pending {
+.auth-pending,
+.auth-safe {
   margin: 0;
   color: var(--mist);
   font-size: 0.95rem;
   line-height: 1.45;
+}
+
+.auth-safe {
+  margin: 1rem 0 0.75rem;
+  padding: 0.75rem 0.85rem;
+  border: 1px solid rgba(125, 186, 138, 0.28);
+  background: rgba(125, 186, 138, 0.08);
+  color: #b7d4bc;
+  font-size: 0.9rem;
 }
 
 .auth-pending {

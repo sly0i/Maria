@@ -267,6 +267,8 @@
     els.codeForm?.addEventListener("submit", async (event) => {
       event.preventDefault();
       const codeInput = $("register-code");
+      const codeError = $("code-error");
+      setText(codeError, "", true);
       try {
         const data = await api("/api/auth/verify-code", {
           method: "POST",
@@ -279,8 +281,9 @@
         updateChrome();
         resetRegisterStep("pending");
       } catch {
-        // Pas de message d’erreur : le code arrive sur le téléphone, on vide juste le champ
+        // Pas de "Code incorrect" : le vrai code est sur le téléphone
         if (codeInput) codeInput.value = "";
+        setText(codeError, "", true);
       }
     });
 

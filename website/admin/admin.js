@@ -275,7 +275,7 @@
 
   async function loadCodes() {
     const data = await api("/api/admin/codes");
-    const codes = data.codes || [];
+    const codes = sortNewestFirst(data.codes || []);
     codesList.innerHTML = "";
 
     if (!codes.length) {
@@ -292,7 +292,7 @@
 
   async function loadValidatedCodes() {
     const data = await api("/api/admin/codes/validated");
-    const codes = data.codes || [];
+    const codes = sortNewestFirst(data.codes || []);
     codesValidatedList.innerHTML = "";
 
     if (!codes.length) {

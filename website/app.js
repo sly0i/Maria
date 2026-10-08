@@ -16,7 +16,7 @@
     siteBrandName: document.getElementById("site-brand-name"),
     heroBrand: document.getElementById("hero-brand"),
     heroTagline: document.getElementById("hero-tagline"),
-    galleryDescription: document.getElementById("gallery-description"),
+    siteDescription: document.getElementById("site-description"),
     videoList: document.getElementById("video-list"),
     videoEmpty: document.getElementById("video-empty"),
     adsSection: document.getElementById("ads-section"),
@@ -47,8 +47,8 @@
       els.heroTagline.textContent = cfg.tagline || "";
     }
 
-    if (els.galleryDescription) {
-      els.galleryDescription.textContent =
+    if (els.siteDescription) {
+      els.siteDescription.textContent =
         cfg.description || "Regarde les dernières publications";
     }
   }
@@ -204,7 +204,7 @@
         brandName: document.getElementById("age-brand-name")?.textContent || "Mon site",
         logoPath: document.getElementById("age-logo")?.getAttribute("src") || "/assets/logo.svg",
         tagline: document.getElementById("hero-tagline")?.textContent || "",
-        description: document.getElementById("gallery-description")?.textContent || "",
+        description: document.getElementById("site-description")?.textContent || "",
       });
     }),
     auth.refreshMember(),

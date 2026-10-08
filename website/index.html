@@ -141,27 +141,24 @@
         </div>
       </header>
 
-      <main>
-        <section class="hero">
-          <div class="hero__copy">
-            <p id="hero-brand" class="hero__brand">Maria</p>
-            <h1 class="hero__headline">L’expérience commence ici</h1>
-            <p id="hero-tagline" class="hero__tagline"></p>
-          </div>
-          <div class="hero__visual" aria-hidden="true"></div>
+      <main class="page">
+        <section class="intro" aria-labelledby="hero-brand">
+          <p id="hero-brand" class="intro__brand">Maria</p>
+          <p id="site-description" class="intro__description">Regarde les dernières publications</p>
+          <p id="hero-tagline" class="intro__tagline"></p>
         </section>
 
-        <section id="ads-section" class="ads-section" aria-labelledby="ads-title" hidden>
-          <div class="ads-section__head">
-            <h2 id="ads-title" class="ads-section__title">Publicité</h2>
+        <section id="ads-section" class="panel-block ads-section" aria-labelledby="ads-title" hidden>
+          <div class="panel-block__head">
+            <h2 id="ads-title" class="panel-block__title">Publicité</h2>
           </div>
           <div id="ads-list" class="ads-list"></div>
         </section>
 
-        <section class="gallery" aria-labelledby="gallery-title">
-          <div class="gallery__head">
-            <h2 id="gallery-title" class="gallery__title">Vidéos</h2>
-            <p id="gallery-description" class="gallery__subtitle">Regarde les dernières publications</p>
+        <section class="panel-block gallery" aria-labelledby="gallery-title">
+          <div class="panel-block__head">
+            <h2 id="gallery-title" class="panel-block__title">Vidéos</h2>
+            <p class="panel-block__hint">Clique pour ouvrir et regarder</p>
           </div>
           <div id="video-list" class="video-list"></div>
           <p id="video-empty" class="video-empty" hidden>Aucune vidéo pour le moment.</p>

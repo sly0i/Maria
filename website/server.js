@@ -943,6 +943,10 @@ function applyBrandToHtml(html) {
     `$1${tagline}$2`
   );
   html = html.replace(
+    /(<p id="site-description"[^>]*>)[\s\S]*?(<\/p>)/i,
+    `$1${description}$2`
+  );
+  html = html.replace(
     /(<p id="gallery-description"[^>]*>)[\s\S]*?(<\/p>)/i,
     `$1${description}$2`
   );

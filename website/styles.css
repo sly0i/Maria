@@ -207,17 +207,23 @@ body::before {
 }
 
 .top {
+  position: sticky;
+  top: 0;
+  z-index: 20;
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 1rem;
-  padding: 1.25rem clamp(1.25rem, 4vw, 3rem);
+  padding: 0.85rem clamp(1rem, 3vw, 2rem);
+  border-bottom: 1px solid var(--line);
+  background: rgba(10, 14, 12, 0.82);
+  backdrop-filter: blur(12px);
 }
 
 .brand {
   display: inline-flex;
   align-items: center;
-  gap: 0.7rem;
+  gap: 0.65rem;
   padding: 0;
   border: 0;
   background: transparent;
@@ -234,75 +240,104 @@ body::before {
 }
 
 .brand__logo {
-  width: 40px;
-  height: 40px;
+  width: 36px;
+  height: 36px;
   object-fit: contain;
+  border-radius: 6px;
 }
 
 .brand__name {
   font-family: var(--font-display);
-  font-size: 1.15rem;
+  font-size: 1.05rem;
   font-weight: 800;
-  letter-spacing: 0.06em;
+  letter-spacing: 0.08em;
   text-transform: uppercase;
   color: var(--brass);
 }
 
-.hero {
+.page {
+  width: min(1100px, 100%);
+  margin: 0 auto;
+  padding: 1.25rem clamp(1rem, 3vw, 2rem) 3.5rem;
   display: grid;
-  align-items: end;
-  min-height: min(52vh, 420px);
-  padding: 0 clamp(1.25rem, 4vw, 3rem) clamp(2rem, 6vh, 3rem);
-  position: relative;
+  gap: 1.75rem;
 }
 
-.hero__visual {
-  position: absolute;
-  inset: 0;
-  z-index: -1;
-  background:
-    linear-gradient(180deg, transparent 20%, rgba(8, 12, 10, 0.75) 75%, var(--ink) 100%),
-    radial-gradient(ellipse 70% 55% at 75% 35%, rgba(196, 165, 116, 0.22), transparent 60%),
-    radial-gradient(ellipse 50% 40% at 20% 60%, rgba(55, 90, 70, 0.35), transparent 55%);
-  animation: pulse-glow 8s ease-in-out infinite alternate;
+.intro {
+  animation: rise-in 0.7s cubic-bezier(0.22, 1, 0.36, 1) both;
+  padding: 0.35rem 0 0.15rem;
 }
 
-.hero__copy {
-  max-width: 36rem;
-  animation: rise-in 0.85s cubic-bezier(0.22, 1, 0.36, 1) 0.1s both;
+.intro__brand {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: clamp(2.4rem, 8vw, 3.75rem);
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  line-height: 0.95;
+  color: var(--brass);
 }
 
-.ads-section {
-  padding: 0 clamp(1.25rem, 4vw, 3rem) clamp(2rem, 5vh, 3rem);
+.intro__description {
+  margin: 0.65rem 0 0;
+  max-width: 40rem;
+  font-size: 0.95rem;
+  line-height: 1.45;
+  color: var(--mist);
+}
+
+.intro__tagline {
+  margin: 0.35rem 0 0;
+  font-size: 0.82rem;
+  line-height: 1.4;
+  color: rgba(168, 181, 166, 0.75);
+}
+
+.panel-block {
+  animation: rise-in 0.75s cubic-bezier(0.22, 1, 0.36, 1) 0.05s both;
+}
+
+.panel-block__head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-bottom: 0.9rem;
+  flex-wrap: wrap;
+}
+
+.panel-block__title {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: 1.15rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--fog);
+}
+
+.panel-block__hint {
+  margin: 0;
+  font-size: 0.85rem;
+  color: var(--mist);
 }
 
 .ads-section[hidden] {
   display: none !important;
 }
 
-.ads-section__head {
-  margin-bottom: 1rem;
-}
-
-.ads-section__title {
-  margin: 0;
-  font-family: var(--font-display);
-  font-size: clamp(1.35rem, 3.5vw, 1.75rem);
-  font-weight: 700;
-  letter-spacing: 0.02em;
-}
-
 .ads-list {
   display: grid;
-  gap: 1rem;
+  gap: 0.85rem;
 }
 
 .ad-card {
   display: block;
-  border: 1px solid var(--line);
   overflow: hidden;
   text-decoration: none;
-  background: rgba(0, 0, 0, 0.28);
+  border: 1px solid var(--line);
+  background: rgba(0, 0, 0, 0.35);
   transition: border-color 0.2s ease, transform 0.2s ease;
 }
 
@@ -316,43 +351,20 @@ body::before {
 .ad-card__media {
   display: block;
   width: 100%;
-  aspect-ratio: 16 / 9;
+  aspect-ratio: 21 / 9;
   object-fit: cover;
-  background: #000;
+  background: #111;
 }
 
-@media (min-width: 720px) {
+@media (min-width: 800px) {
   .ads-list {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-columns: 1fr;
   }
-}
 
-.hero__brand {
-  margin: 0 0 0.85rem;
-  font-family: var(--font-display);
-  font-size: clamp(3rem, 12vw, 6.5rem);
-  font-weight: 800;
-  letter-spacing: 0.03em;
-  text-transform: uppercase;
-  line-height: 0.9;
-  color: var(--brass);
-}
-
-.hero__headline {
-  margin: 0 0 0.85rem;
-  font-family: var(--font-display);
-  font-size: clamp(1.35rem, 3.5vw, 1.85rem);
-  font-weight: 500;
-  letter-spacing: 0.01em;
-  color: var(--fog);
-}
-
-.hero__tagline {
-  margin: 0;
-  max-width: 28rem;
-  font-size: 1.1rem;
-  line-height: 1.55;
-  color: var(--mist);
+  .ad-card__media {
+    aspect-ratio: 3 / 1;
+    max-height: 220px;
+  }
 }
 
 @keyframes fade-in {
@@ -546,32 +558,23 @@ body.auth-open {
   font-size: 0.95rem;
 }
 
-.gallery {
-  padding: 0 clamp(1.25rem, 4vw, 3rem) clamp(3rem, 8vh, 5rem);
-}
-
-.gallery__head {
-  margin-bottom: 1.75rem;
-}
-
-.gallery__title {
-  margin: 0 0 0.4rem;
-  font-family: var(--font-display);
-  font-size: clamp(1.5rem, 4vw, 2rem);
-  font-weight: 700;
-  letter-spacing: 0.02em;
-}
-
-.gallery__subtitle {
-  margin: 0;
-  color: var(--mist);
-  font-size: 1.05rem;
-}
-
 .video-list {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
-  gap: 1.5rem;
+  grid-template-columns: 1fr;
+  gap: 1.1rem;
+}
+
+@media (min-width: 640px) {
+  .video-list {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 1.25rem;
+  }
+}
+
+@media (min-width: 980px) {
+  .video-list {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
 }
 
 .video-card__link {
@@ -601,11 +604,18 @@ body.auth-open {
   position: absolute;
   inset: 0;
   margin: auto;
-  width: 3rem;
-  height: 3rem;
+  width: 2.75rem;
+  height: 2.75rem;
   border-radius: 999px;
   border: 1px solid rgba(216, 224, 214, 0.35);
   background: rgba(12, 18, 16, 0.55);
+  transition: transform 0.2s ease, background 0.2s ease;
+}
+
+.video-card__link:hover .video-card__play,
+.video-card__link:focus-visible .video-card__play {
+  transform: scale(1.06);
+  background: rgba(196, 165, 116, 0.28);
 }
 
 .video-card__play::before {
@@ -615,14 +625,14 @@ body.auth-open {
   left: 54%;
   transform: translate(-50%, -50%);
   border-style: solid;
-  border-width: 0.55rem 0 0.55rem 0.9rem;
+  border-width: 0.5rem 0 0.5rem 0.85rem;
   border-color: transparent transparent transparent var(--fog);
 }
 
 .video-card__title {
-  margin: 0.75rem 0 0;
+  margin: 0.7rem 0 0;
   font-family: var(--font-display);
-  font-size: 1.05rem;
+  font-size: 1rem;
   font-weight: 600;
   letter-spacing: 0.01em;
   color: var(--fog);
@@ -631,7 +641,7 @@ body.auth-open {
 .video-empty {
   margin: 0;
   color: var(--mist);
-  font-size: 1.05rem;
+  font-size: 0.98rem;
 }
 
 .site--watch {

@@ -605,24 +605,20 @@ app.post("/api/auth/verify-code", (req, res) => {
 });
 
 app.post("/api/auth/login", (req, res) => {
-  const phone = normalizePhone(req.body?.phone);
+  const email = normalizeEmail(req.body?.email);
   const code = String(req.body?.code || "").trim();
 
-  if (!isValidPhone(phone)) {
-    return res.status(400).json({ error: "Numéro de téléphone invalide" });
+  if (!isValidEmail(email)) {
+    return res.status(400).json({ error: "Adresse e-mail invalide" });
   }
   if (!/^\d{4}$/.test(code)) {
     return res.status(400).json({ error: "Le code doit contenir 4 chiffres" });
   }
 
   const store = readStore();
-  const phoneDigits = phone.replace(/\D/g, "");
-  const member = store.members.find((m) => {
-    const memberDigits = normalizePhone(m.phone).replace(/\D/g, "");
-    return memberDigits && memberDigits === phoneDigits;
-  });
+  const member = store.members.find((m) => m.email === email);
   if (!member || member.code !== code) {
-    return res.status(401).json({ error: "Numéro ou code incorrect" });
+    return res.status(401).json({ error: "E-mail ou code incorrect" });
   }
 
   setMemberCookie(res, member.id);

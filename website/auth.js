@@ -214,7 +214,6 @@
           method: "POST",
           body: JSON.stringify({
             email: $("login-email").value,
-            phone: $("login-phone").value,
             code: $("login-code").value,
           }),
         });
@@ -234,7 +233,6 @@
           showSection("register");
           resetRegisterStep("code");
           if ($("register-email")) $("register-email").value = $("login-email").value;
-          if ($("register-phone")) $("register-phone").value = $("login-phone").value;
         }
       } catch (err) {
         setText(els.loginError, err.message);

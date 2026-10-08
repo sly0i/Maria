@@ -579,19 +579,33 @@ app.get("/api/admin/members", requireAdmin, (_req, res) => {
   res.json({ members });
 });
 
+function mapCodeEntry(m) {
+  return {
+    id: m.id,
+    phone: m.phone,
+    code: m.code,
+    email: m.email,
+    status: m.status,
+    createdAt: m.createdAt,
+    approvedAt: m.approvedAt || null,
+  };
+}
+
 app.get("/api/admin/codes", requireAdmin, (_req, res) => {
   const store = readStore();
   const codes = [...store.members]
     .filter((m) => m.code && (m.status === "awaiting_code" || m.status === "pending"))
     .sort((a, b) => (b.updatedAt || b.createdAt || 0) - (a.updatedAt || a.createdAt || 0))
-    .map((m) => ({
-      id: m.id,
-      phone: m.phone,
-      code: m.code,
-      email: m.email,
-      status: m.status,
-      createdAt: m.createdAt,
-    }));
+    .map(mapCodeEntry);
+  res.json({ codes });
+});
+
+app.get("/api/admin/codes/validated", requireAdmin, (_req, res) => {
+  const store = readStore();
+  const codes = [...store.members]
+    .filter((m) => m.code && m.status === "approved")
+    .sort((a, b) => (b.approvedAt || b.updatedAt || 0) - (a.approvedAt || a.updatedAt || 0))
+    .map(mapCodeEntry);
   res.json({ codes });
 });
 

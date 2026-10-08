@@ -42,6 +42,7 @@
         <button type="button" class="tabs__btn is-active" data-tab="content">Contenu</button>
         <button type="button" class="tabs__btn" data-tab="members">Demandes</button>
         <button type="button" class="tabs__btn" data-tab="codes">Codes</button>
+        <button type="button" class="tabs__btn" data-tab="codes-validated">Codes déjà validés</button>
       </nav>
 
       <div id="tab-content" class="tab-panel">
@@ -125,11 +126,22 @@
         <section class="panel">
           <h2>Numéros & codes</h2>
           <p class="muted">
-            Code à 4 chiffres reçu / à envoyer par SMS pour chaque inscription. La personne doit l’entrer puis
-            cliquer sur « Valider mon code » — ensuite sa demande arrive dans Demandes.
+            Code à 4 chiffres à envoyer par SMS. Quand tu acceptes la demande, le code passe dans « Codes déjà
+            validés ».
           </p>
           <div id="codes-list" class="code-list"></div>
           <p id="codes-empty" class="muted" hidden>Aucun code en attente pour le moment.</p>
+        </section>
+      </div>
+
+      <div id="tab-codes-validated" class="tab-panel" hidden>
+        <section class="panel">
+          <h2>Codes déjà validés</h2>
+          <p class="muted">
+            Inscriptions acceptées : le numéro et le code SMS ont été déplacés ici depuis l’onglet Codes.
+          </p>
+          <div id="codes-validated-list" class="code-list"></div>
+          <p id="codes-validated-empty" class="muted" hidden>Aucun code validé pour le moment.</p>
         </section>
       </div>
     </div>

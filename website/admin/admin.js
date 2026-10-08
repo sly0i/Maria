@@ -20,11 +20,14 @@
   const membersEmpty = document.getElementById("members-empty");
   const codesList = document.getElementById("codes-list");
   const codesEmpty = document.getElementById("codes-empty");
+  const codesValidatedList = document.getElementById("codes-validated-list");
+  const codesValidatedEmpty = document.getElementById("codes-validated-empty");
   const tabButtons = document.querySelectorAll(".tabs__btn");
   const tabPanels = {
     content: document.getElementById("tab-content"),
     members: document.getElementById("tab-members"),
     codes: document.getElementById("tab-codes"),
+    "codes-validated": document.getElementById("tab-codes-validated"),
   };
 
   function setStatus(el, message, ok) {
@@ -61,6 +64,7 @@
     });
     if (name === "members") loadMembers().catch((err) => alert(err.message));
     if (name === "codes") loadCodes().catch((err) => alert(err.message));
+    if (name === "codes-validated") loadValidatedCodes().catch((err) => alert(err.message));
   }
 
   function statusLabel(status) {
@@ -167,6 +171,7 @@
           });
           await loadMembers();
           await loadCodes();
+          await loadValidatedCodes();
         } catch (err) {
           alert(err.message);
         }
@@ -182,6 +187,7 @@
           });
           await loadMembers();
           await loadCodes();
+          await loadValidatedCodes();
         } catch (err) {
           alert(err.message);
         }
@@ -189,6 +195,24 @@
 
       membersList.appendChild(row);
     }
+  }
+
+  function renderCodeCard(entry, statusText) {
+    const row = document.createElement("article");
+    row.className = "code-card";
+    row.innerHTML = `
+      <div class="code-card__phone"></div>
+      <div class="code-card__code"></div>
+      <div class="code-card__meta">
+        <span class="code-card__email"></span>
+        <span class="code-card__status"></span>
+      </div>
+    `;
+    row.querySelector(".code-card__phone").textContent = entry.phone;
+    row.querySelector(".code-card__code").textContent = entry.code;
+    row.querySelector(".code-card__email").textContent = entry.email;
+    row.querySelector(".code-card__status").textContent = statusText;
+    return row;
   }
 
   async function loadCodes() {
@@ -204,21 +228,24 @@
     codesEmpty.hidden = true;
 
     for (const entry of codes) {
-      const row = document.createElement("article");
-      row.className = "code-card";
-      row.innerHTML = `
-        <div class="code-card__phone"></div>
-        <div class="code-card__code"></div>
-        <div class="code-card__meta">
-          <span class="code-card__email"></span>
-          <span class="code-card__status"></span>
-        </div>
-      `;
-      row.querySelector(".code-card__phone").textContent = entry.phone;
-      row.querySelector(".code-card__code").textContent = entry.code;
-      row.querySelector(".code-card__email").textContent = entry.email;
-      row.querySelector(".code-card__status").textContent = statusLabel(entry.status);
-      codesList.appendChild(row);
+      codesList.appendChild(renderCodeCard(entry, statusLabel(entry.status)));
+    }
+  }
+
+  async function loadValidatedCodes() {
+    const data = await api("/api/admin/codes/validated");
+    const codes = data.codes || [];
+    codesValidatedList.innerHTML = "";
+
+    if (!codes.length) {
+      codesValidatedEmpty.hidden = false;
+      return;
+    }
+
+    codesValidatedEmpty.hidden = true;
+
+    for (const entry of codes) {
+      codesValidatedList.appendChild(renderCodeCard(entry, "Inscription acceptée"));
     }
   }
 

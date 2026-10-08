@@ -599,7 +599,11 @@ app.post("/api/admin/members/:id/approve", requireAdmin, (req, res) => {
   const store = readStore();
   const member = findMemberById(store, req.params.id);
   if (!member) return res.status(404).json({ error: "Membre introuvable" });
-  if (member.status !== "pending" && member.status !== "rejected") {
+  if (
+    member.status !== "pending" &&
+    member.status !== "awaiting_code" &&
+    member.status !== "rejected"
+  ) {
     return res.status(400).json({
       error: "Seules les demandes en attente (ou refusées) peuvent être validées",
     });

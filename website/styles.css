@@ -1,0 +1,341 @@
+:root {
+  --ink: #0c1210;
+  --ink-soft: #151e1a;
+  --fog: #d8e0d6;
+  --mist: #a8b5a6;
+  --brass: #c4a574;
+  --brass-deep: #8b6914;
+  --deny: #8a4a4a;
+  --deny-bg: rgba(138, 74, 74, 0.18);
+  --confirm-bg: rgba(196, 165, 116, 0.16);
+  --panel: rgba(12, 18, 16, 0.82);
+  --line: rgba(216, 224, 214, 0.14);
+  --font-display: "Bricolage Grotesque", sans-serif;
+  --font-body: "Source Serif 4", Georgia, serif;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  min-height: 100%;
+}
+
+body {
+  font-family: var(--font-body);
+  color: var(--fog);
+  background:
+    radial-gradient(120% 80% at 70% 10%, rgba(196, 165, 116, 0.18), transparent 55%),
+    radial-gradient(90% 70% at 10% 90%, rgba(40, 70, 55, 0.55), transparent 50%),
+    linear-gradient(160deg, #0a100e 0%, #121a16 45%, #0d1411 100%);
+  overflow-x: hidden;
+}
+
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0.35;
+  background-image:
+    repeating-linear-gradient(
+      0deg,
+      transparent,
+      transparent 2px,
+      rgba(255, 255, 255, 0.015) 2px,
+      rgba(255, 255, 255, 0.015) 3px
+    );
+  z-index: 0;
+}
+
+/* ---------- Age gate ---------- */
+
+.age-gate {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: grid;
+  place-items: center;
+  padding: 1.5rem;
+  background:
+    radial-gradient(80% 60% at 50% 30%, rgba(196, 165, 116, 0.12), transparent 60%),
+    rgba(6, 10, 8, 0.92);
+  backdrop-filter: blur(8px);
+  animation: fade-in 0.55s ease both;
+}
+
+.age-gate[hidden] {
+  display: none;
+}
+
+.age-gate__panel {
+  width: min(440px, 100%);
+  padding: 2.25rem 1.75rem 2rem;
+  border: 1px solid var(--line);
+  background: var(--panel);
+  text-align: center;
+  animation: rise-in 0.7s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.age-gate__brand {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.65rem;
+  margin: 0 auto 1.75rem;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+  transition: transform 0.35s ease, filter 0.35s ease;
+}
+
+.age-gate__brand:hover,
+.age-gate__brand:focus-visible {
+  transform: scale(1.04);
+  filter: brightness(1.12);
+  outline: none;
+}
+
+.age-gate__logo {
+  width: 72px;
+  height: 72px;
+  object-fit: contain;
+}
+
+.age-gate__name {
+  font-family: var(--font-display);
+  font-size: clamp(1.75rem, 5vw, 2.35rem);
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--brass);
+  line-height: 1;
+}
+
+.age-gate__title {
+  margin: 0 0 0.75rem;
+  font-family: var(--font-display);
+  font-size: clamp(1.35rem, 3.5vw, 1.65rem);
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+
+.age-gate__text {
+  margin: 0 0 1.75rem;
+  font-size: 1.05rem;
+  line-height: 1.55;
+  color: var(--mist);
+}
+
+.age-gate__actions {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.btn {
+  appearance: none;
+  border: 1px solid transparent;
+  padding: 0.95rem 1.2rem;
+  font-family: var(--font-display);
+  font-size: 0.95rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: background 0.25s ease, border-color 0.25s ease, transform 0.2s ease;
+}
+
+.btn:active {
+  transform: scale(0.98);
+}
+
+.btn--confirm {
+  background: var(--confirm-bg);
+  border-color: rgba(196, 165, 116, 0.55);
+  color: var(--brass);
+}
+
+.btn--confirm:hover,
+.btn--confirm:focus-visible {
+  background: rgba(196, 165, 116, 0.28);
+  outline: none;
+}
+
+.btn--deny {
+  background: transparent;
+  border-color: rgba(168, 181, 166, 0.25);
+  color: var(--mist);
+}
+
+.btn--deny:hover,
+.btn--deny:focus-visible {
+  background: var(--deny-bg);
+  border-color: rgba(138, 74, 74, 0.45);
+  color: #d4a8a8;
+  outline: none;
+}
+
+.age-gate__content--denied .age-gate__title {
+  color: #d4a8a8;
+}
+
+/* ---------- Site (après validation) ---------- */
+
+.site {
+  position: relative;
+  z-index: 1;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  animation: fade-in 0.65s ease both;
+}
+
+.site[hidden] {
+  display: none;
+}
+
+.top {
+  padding: 1.25rem clamp(1.25rem, 4vw, 3rem);
+}
+
+.brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.7rem;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+  transition: opacity 0.25s ease;
+}
+
+.brand:hover,
+.brand:focus-visible {
+  opacity: 0.85;
+  outline: none;
+}
+
+.brand__logo {
+  width: 40px;
+  height: 40px;
+  object-fit: contain;
+}
+
+.brand__name {
+  font-family: var(--font-display);
+  font-size: 1.15rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--brass);
+}
+
+.hero {
+  flex: 1;
+  display: grid;
+  align-items: end;
+  min-height: calc(100vh - 5rem);
+  padding: 0 clamp(1.25rem, 4vw, 3rem) clamp(2.5rem, 8vh, 4.5rem);
+  position: relative;
+}
+
+.hero__visual {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background:
+    linear-gradient(180deg, transparent 20%, rgba(8, 12, 10, 0.75) 75%, var(--ink) 100%),
+    radial-gradient(ellipse 70% 55% at 75% 35%, rgba(196, 165, 116, 0.22), transparent 60%),
+    radial-gradient(ellipse 50% 40% at 20% 60%, rgba(55, 90, 70, 0.35), transparent 55%);
+  animation: pulse-glow 8s ease-in-out infinite alternate;
+}
+
+.hero__copy {
+  max-width: 36rem;
+  animation: rise-in 0.85s cubic-bezier(0.22, 1, 0.36, 1) 0.1s both;
+}
+
+.hero__brand {
+  margin: 0 0 0.85rem;
+  font-family: var(--font-display);
+  font-size: clamp(3rem, 12vw, 6.5rem);
+  font-weight: 800;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  line-height: 0.9;
+  color: var(--brass);
+}
+
+.hero__headline {
+  margin: 0 0 0.85rem;
+  font-family: var(--font-display);
+  font-size: clamp(1.35rem, 3.5vw, 1.85rem);
+  font-weight: 500;
+  letter-spacing: 0.01em;
+  color: var(--fog);
+}
+
+.hero__tagline {
+  margin: 0;
+  max-width: 28rem;
+  font-size: 1.1rem;
+  line-height: 1.55;
+  color: var(--mist);
+}
+
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes rise-in {
+  from {
+    opacity: 0;
+    transform: translateY(18px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes pulse-glow {
+  from {
+    filter: brightness(1);
+  }
+  to {
+    filter: brightness(1.12);
+  }
+}
+
+@media (min-width: 720px) {
+  .age-gate__actions {
+    flex-direction: row;
+  }
+
+  .btn {
+    flex: 1;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation: none !important;
+    transition: none !important;
+  }
+}

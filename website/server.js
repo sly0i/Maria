@@ -5,7 +5,10 @@ import crypto from "crypto";
 import fs from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
+import { execFile } from "child_process";
+import { promisify } from "util";
 
+const execFileAsync = promisify(execFile);
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const PORT = Number(process.env.PORT || 8765);
 const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || "admin123";
@@ -25,6 +28,7 @@ const DEFAULT_STORE = {
   brandName: "Maria",
   logoPath: "/assets/logo.svg",
   tagline: "Bienvenue. L’accès est réservé aux personnes majeures.",
+  description: "Regarde les dernières publications",
   videos: [],
 };
 
@@ -87,6 +91,79 @@ function safeExt(originalName, fallback) {
   return ext;
 }
 
+function publicConfig(store) {
+  return {
+    brandName: store.brandName,
+    logoPath: store.logoPath,
+    tagline: store.tagline,
+    description: store.description,
+  };
+}
+
+async function needsTranscode(filePath) {
+  try {
+    const { stdout } = await execFileAsync(
+      "ffprobe",
+      [
+        "-v",
+        "error",
+        "-select_streams",
+        "v:0",
+        "-show_entries",
+        "stream=codec_name",
+        "-of",
+        "default=nokey=1:noprint_wrappers=1",
+        filePath,
+      ],
+      { timeout: 30000 }
+    );
+    const codec = String(stdout || "").trim().toLowerCase();
+    const ext = path.extname(filePath).toLowerCase();
+    // Déjà un MP4 H.264 → lecture OK sur mobile (Chrome/Safari)
+    if (ext === ".mp4" && (codec === "h264" || codec === "avc1")) return false;
+    return true;
+  } catch {
+    return true;
+  }
+}
+
+async function transcodeToMp4(inputPath) {
+  const id = path.parse(inputPath).name;
+  const outputPath = path.join(VIDEOS_DIR, `${id}.mp4`);
+  const tmpPath = path.join(VIDEOS_DIR, `${id}.tmp.mp4`);
+
+  await execFileAsync(
+    "ffmpeg",
+    [
+      "-y",
+      "-i",
+      inputPath,
+      "-c:v",
+      "libx264",
+      "-preset",
+      "veryfast",
+      "-crf",
+      "23",
+      "-pix_fmt",
+      "yuv420p",
+      "-c:a",
+      "aac",
+      "-b:a",
+      "128k",
+      "-movflags",
+      "+faststart",
+      tmpPath,
+    ],
+    { timeout: 1000 * 60 * 20 }
+  );
+
+  fs.renameSync(tmpPath, outputPath);
+  if (inputPath !== outputPath && fs.existsSync(inputPath)) {
+    fs.unlinkSync(inputPath);
+  }
+  return outputPath;
+}
+
 const videoStorage = multer.diskStorage({
   destination: (_req, _file, cb) => cb(null, VIDEOS_DIR),
   filename: (_req, file, cb) => {
@@ -125,17 +202,14 @@ app.use(cookieParser());
 app.use(express.json({ limit: "1mb" }));
 
 app.get("/api/config", (_req, res) => {
-  const store = readStore();
-  res.json({
-    brandName: store.brandName,
-    logoPath: store.logoPath,
-    tagline: store.tagline,
-  });
+  res.json(publicConfig(readStore()));
 });
 
 app.get("/api/videos", (_req, res) => {
   const store = readStore();
-  const videos = [...store.videos].sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
+  const videos = [...store.videos]
+    .filter((v) => v?.filename && fs.existsSync(path.join(VIDEOS_DIR, v.filename)))
+    .sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
   res.json({ videos });
 });
 
@@ -171,6 +245,8 @@ app.put("/api/admin/brand", requireAdmin, (req, res) => {
   const store = readStore();
   const brandName = String(req.body?.brandName || "").trim();
   const tagline = req.body?.tagline !== undefined ? String(req.body.tagline).trim() : store.tagline;
+  const description =
+    req.body?.description !== undefined ? String(req.body.description).trim() : store.description;
 
   if (!brandName) {
     return res.status(400).json({ error: "Le nom est requis" });
@@ -178,12 +254,9 @@ app.put("/api/admin/brand", requireAdmin, (req, res) => {
 
   store.brandName = brandName;
   store.tagline = tagline;
+  store.description = description || DEFAULT_STORE.description;
   writeStore(store);
-  res.json({
-    brandName: store.brandName,
-    logoPath: store.logoPath,
-    tagline: store.tagline,
-  });
+  res.json(publicConfig(store));
 });
 
 app.post("/api/admin/logo", requireAdmin, (req, res) => {
@@ -206,7 +279,7 @@ app.post("/api/admin/logo", requireAdmin, (req, res) => {
 });
 
 app.post("/api/admin/videos", requireAdmin, (req, res) => {
-  uploadVideo.single("video")(req, res, (err) => {
+  uploadVideo.single("video")(req, res, async (err) => {
     if (err) return res.status(400).json({ error: err.message });
     if (!req.file) return res.status(400).json({ error: "Aucune vidéo envoyée" });
 
@@ -216,12 +289,41 @@ app.post("/api/admin/videos", requireAdmin, (req, res) => {
       return res.status(400).json({ error: "Le titre est requis" });
     }
 
+    let finalPath = req.file.path;
+    let filename = req.file.filename;
+
+    try {
+      if (await needsTranscode(req.file.path)) {
+        finalPath = await transcodeToMp4(req.file.path);
+        filename = path.basename(finalPath);
+      } else if (path.extname(filename).toLowerCase() !== ".mp4") {
+        // Rare: déjà H.264 mais mauvaise extension → renommer en .mp4
+        const renamed = path.join(VIDEOS_DIR, `${path.parse(filename).name}.mp4`);
+        fs.renameSync(req.file.path, renamed);
+        finalPath = renamed;
+        filename = path.basename(renamed);
+      }
+    } catch (convertErr) {
+      console.error("Conversion vidéo échouée:", convertErr);
+      fs.unlink(req.file.path, () => {});
+      if (finalPath !== req.file.path) fs.unlink(finalPath, () => {});
+      return res.status(400).json({
+        error:
+          "Impossible de convertir cette vidéo. Réessaie avec un fichier MP4 (H.264), ou une vidéo plus courte.",
+      });
+    }
+
+    if (!fs.existsSync(finalPath) || fs.statSync(finalPath).size === 0) {
+      fs.unlink(finalPath, () => {});
+      return res.status(400).json({ error: "Fichier vidéo invalide après traitement" });
+    }
+
     const store = readStore();
     const entry = {
-      id: path.parse(req.file.filename).name,
+      id: path.parse(filename).name,
       title,
-      filename: req.file.filename,
-      url: `/uploads/videos/${req.file.filename}`,
+      filename,
+      url: `/uploads/videos/${filename}`,
       createdAt: Date.now(),
     };
     store.videos.push(entry);
@@ -245,7 +347,17 @@ app.delete("/api/admin/videos/:id", requireAdmin, (req, res) => {
   res.json({ ok: true });
 });
 
-app.use("/uploads", express.static(UPLOADS_DIR));
+app.use(
+  "/uploads",
+  express.static(UPLOADS_DIR, {
+    acceptRanges: true,
+    setHeaders(res, filePath) {
+      if (/\.(mp4|webm|mov|m4v)$/i.test(filePath)) {
+        res.setHeader("Cache-Control", "public, max-age=31536000, immutable");
+      }
+    },
+  })
+);
 app.use("/assets", express.static(path.join(__dirname, "assets")));
 app.use("/admin", express.static(path.join(__dirname, "admin")));
 
@@ -269,5 +381,9 @@ app.use((err, _req, res, _next) => {
 app.listen(PORT, "0.0.0.0", () => {
   console.log(`Site prêt sur http://0.0.0.0:${PORT}`);
   console.log(`Admin : http://0.0.0.0:${PORT}/admin`);
-  console.log(`Mot de passe admin par défaut : ${ADMIN_PASSWORD === "admin123" ? "admin123 (à changer via ADMIN_PASSWORD)" : "(défini via env)"}`);
+  console.log(
+    `Mot de passe admin par défaut : ${
+      ADMIN_PASSWORD === "admin123" ? "admin123 (à changer via ADMIN_PASSWORD)" : "(défini via env)"
+    }`
+  );
 });

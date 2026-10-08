@@ -362,6 +362,22 @@ body::before {
   background: #000;
 }
 
+.video-card__media.is-broken video {
+  opacity: 0.35;
+}
+
+.video-card__error {
+  position: absolute;
+  inset: auto 0.75rem 0.75rem;
+  margin: 0;
+  padding: 0.65rem 0.75rem;
+  border: 1px solid var(--line);
+  background: rgba(12, 18, 16, 0.92);
+  color: var(--mist);
+  font-size: 0.92rem;
+  line-height: 1.35;
+}
+
 .video-card__title {
   margin: 0.85rem 0 0;
   font-family: var(--font-display);

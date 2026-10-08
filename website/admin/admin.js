@@ -7,6 +7,7 @@
   const brandForm = document.getElementById("brand-form");
   const brandName = document.getElementById("brand-name");
   const brandTagline = document.getElementById("brand-tagline");
+  const brandDescription = document.getElementById("brand-description");
   const brandStatus = document.getElementById("brand-status");
   const logoForm = document.getElementById("logo-form");
   const logoPreview = document.getElementById("logo-preview");
@@ -45,6 +46,7 @@
     const cfg = await api("/api/config");
     brandName.value = cfg.brandName || "";
     brandTagline.value = cfg.tagline || "";
+    brandDescription.value = cfg.description || "";
     logoPreview.src = `${cfg.logoPath || "/assets/logo.svg"}?t=${Date.now()}`;
     document.title = `Admin — ${cfg.brandName || "Site"}`;
   }
@@ -65,7 +67,9 @@
       const row = document.createElement("article");
       row.className = "admin-video";
       row.innerHTML = `
-        <video controls playsinline preload="metadata" src="${video.url}"></video>
+        <video controls playsinline preload="metadata">
+          <source src="${video.url}" type="video/mp4" />
+        </video>
         <div class="admin-video__meta">
           <h3 class="admin-video__title"></h3>
           <button type="button" class="btn btn--danger" data-id="${video.id}">Supprimer</button>
@@ -122,9 +126,10 @@
         body: JSON.stringify({
           brandName: brandName.value.trim(),
           tagline: brandTagline.value.trim(),
+          description: brandDescription.value.trim(),
         }),
       });
-      setStatus(brandStatus, "Nom enregistré.", true);
+      setStatus(brandStatus, "Identité enregistrée.", true);
       document.title = `Admin — ${brandName.value.trim()}`;
     } catch (err) {
       setStatus(brandStatus, err.message, false);
@@ -157,12 +162,12 @@
     const body = new FormData();
     body.append("title", title);
     body.append("video", file);
-    setStatus(videoStatus, "Upload en cours…", true);
+    setStatus(videoStatus, "Upload + conversion MP4 en cours (peut prendre un moment)…", true);
 
     try {
       await api("/api/admin/videos", { method: "POST", body });
       videoForm.reset();
-      setStatus(videoStatus, "Vidéo publiée.", true);
+      setStatus(videoStatus, "Vidéo publiée (compatible mobile).", true);
       await loadVideos();
     } catch (err) {
       setStatus(videoStatus, err.message, false);

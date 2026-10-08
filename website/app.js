@@ -16,6 +16,7 @@
     siteBrandName: document.getElementById("site-brand-name"),
     heroBrand: document.getElementById("hero-brand"),
     heroTagline: document.getElementById("hero-tagline"),
+    galleryDescription: document.getElementById("gallery-description"),
     videoList: document.getElementById("video-list"),
     videoEmpty: document.getElementById("video-empty"),
   };
@@ -39,6 +40,26 @@
     if (els.heroTagline) {
       els.heroTagline.textContent = cfg.tagline || "";
     }
+
+    if (els.galleryDescription) {
+      els.galleryDescription.textContent =
+        cfg.description || "Regarde les dernières publications";
+    }
+  }
+
+  function bindVideoError(videoEl) {
+    const media = videoEl.closest(".video-card__media");
+    if (!media) return;
+    videoEl.addEventListener("error", () => {
+      media.classList.add("is-broken");
+      if (!media.querySelector(".video-card__error")) {
+        const msg = document.createElement("p");
+        msg.className = "video-card__error";
+        msg.textContent =
+          "Vidéo illisible. Ré-uploade-la depuis l’admin (conversion MP4 automatique).";
+        media.appendChild(msg);
+      }
+    });
   }
 
   function renderVideos(videos) {
@@ -57,11 +78,15 @@
       article.className = "video-card";
       article.innerHTML = `
         <div class="video-card__media">
-          <video controls playsinline preload="metadata" src="${video.url}"></video>
+          <video controls playsinline preload="metadata">
+            <source src="${video.url}" type="video/mp4" />
+          </video>
         </div>
         <h3 class="video-card__title"></h3>
       `;
       article.querySelector(".video-card__title").textContent = video.title;
+      const videoEl = article.querySelector("video");
+      bindVideoError(videoEl);
       els.videoList.appendChild(article);
     }
   }

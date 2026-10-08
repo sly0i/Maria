@@ -156,12 +156,21 @@
   });
   els.siteBrand?.addEventListener("click", reopenAgeMessage);
 
+  // Hide gate content until brand is applied, so old placeholder name/logo never stick
+  if (els.gate) els.gate.style.visibility = "hidden";
+
   Promise.all([
     loadPublicData().catch(() => {
-      applyBrand({ brandName: "Maria", logoPath: "/assets/logo.svg", tagline: "" });
+      applyBrand({
+        brandName: document.getElementById("age-brand-name")?.textContent || "Mon site",
+        logoPath: document.getElementById("age-logo")?.getAttribute("src") || "/assets/logo.svg",
+        tagline: document.getElementById("hero-tagline")?.textContent || "",
+        description: document.getElementById("gallery-description")?.textContent || "",
+      });
     }),
     auth.refreshMember(),
   ]).then(() => {
+    if (els.gate) els.gate.style.visibility = "";
     if (isVerified()) {
       els.gate.hidden = true;
       els.site.hidden = false;

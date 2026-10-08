@@ -772,6 +772,54 @@ app.get("/admin/", (_req, res) => {
 
 app.use("/admin", express.static(path.join(__dirname, "admin")));
 
+function escapeHtml(value) {
+  return String(value ?? "")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+}
+
+function applyBrandToHtml(html) {
+  const store = readStore();
+  const name = escapeHtml(store.brandName || "Mon site");
+  const logo = escapeHtml(store.logoPath || "/assets/logo.svg");
+  const tagline = escapeHtml(store.tagline || "");
+  const description = escapeHtml(store.description || "Regarde les dernières publications");
+
+  html = html.replace(/<title>[\s\S]*?<\/title>/i, `<title>${name}</title>`);
+  html = html.replace(
+    /id="age-logo"([^>]*)src="[^"]*"/i,
+    `id="age-logo"$1src="${logo}"`
+  );
+  html = html.replace(
+    /id="site-logo"([^>]*)src="[^"]*"/i,
+    `id="site-logo"$1src="${logo}"`
+  );
+  html = html.replace(
+    /(<span id="age-brand-name"[^>]*>)[\s\S]*?(<\/span>)/i,
+    `$1${name}$2`
+  );
+  html = html.replace(
+    /(<span id="site-brand-name"[^>]*>)[\s\S]*?(<\/span>)/i,
+    `$1${name}$2`
+  );
+  html = html.replace(
+    /(<p id="hero-brand"[^>]*>)[\s\S]*?(<\/p>)/i,
+    `$1${name}$2`
+  );
+  html = html.replace(
+    /(<p id="hero-tagline"[^>]*>)[\s\S]*?(<\/p>)/i,
+    `$1${tagline}$2`
+  );
+  html = html.replace(
+    /(<p id="gallery-description"[^>]*>)[\s\S]*?(<\/p>)/i,
+    `$1${description}$2`
+  );
+  return html;
+}
+
 function sendHtmlWithInlineCss(res, htmlPath, cssPath = path.join(__dirname, "styles.css")) {
   try {
     let html = fs.readFileSync(htmlPath, "utf8");
@@ -784,6 +832,10 @@ function sendHtmlWithInlineCss(res, htmlPath, cssPath = path.join(__dirname, "st
       html = html.replace(linkRe, `<style>\n${css}\n</style>`);
     } else if (html.includes("</head>")) {
       html = html.replace("</head>", `<style>\n${css}\n</style>\n</head>`);
+    }
+    // Inject admin brand (name/logo/texts) so age gate never flashes old placeholders
+    if (htmlPath.endsWith("index.html") || htmlPath.endsWith("watch.html")) {
+      html = applyBrandToHtml(html);
     }
     res.setHeader("Content-Type", "text/html; charset=utf-8");
     res.setHeader("Cache-Control", "no-store");

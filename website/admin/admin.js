@@ -163,9 +163,12 @@
 
   async function loadMembers() {
     const data = await api("/api/admin/members");
-    // Demandes = après validation du code SMS (pending) ou refusées
+    // Demandes = mêmes personnes que Codes (awaiting_code / pending) + refusées
     const pending = (data.members || []).filter(
-      (m) => m.status === "pending" || m.status === "rejected"
+      (m) =>
+        m.status === "awaiting_code" ||
+        m.status === "pending" ||
+        m.status === "rejected"
     );
     membersList.innerHTML = "";
 
@@ -199,6 +202,11 @@
 
       if (member.status === "rejected") {
         rejectBtn.hidden = true;
+      }
+      // Valider le compte seulement après que la personne a saisi son code SMS
+      if (member.status === "awaiting_code") {
+        approveBtn.disabled = true;
+        approveBtn.title = "La personne doit d’abord valider son code SMS";
       }
 
       approveBtn.addEventListener("click", async () => {

@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="fr">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Maria</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=Source+Serif+4:opsz,ital,wght@8..60,0,400;8..60,0,500;8..60,1,400&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <!-- Overlay âge : bloque tout tant que non validé -->
+    <div id="age-gate" class="age-gate" role="dialog" aria-modal="true" aria-labelledby="age-title" hidden>
+      <div class="age-gate__panel">
+        <button type="button" class="age-gate__brand" id="age-brand-trigger" aria-label="Voir le message d’âge">
+          <img id="age-logo" class="age-gate__logo" src="assets/logo.svg" alt="" />
+          <span id="age-brand-name" class="age-gate__name">Maria</span>
+        </button>
+
+        <div id="age-prompt" class="age-gate__content">
+          <h1 id="age-title" class="age-gate__title">Vérification d’âge</h1>
+          <p id="age-message" class="age-gate__text"></p>
+          <div class="age-gate__actions">
+            <button type="button" id="btn-confirm" class="btn btn--confirm">J’ai 18 ans</button>
+            <button type="button" id="btn-deny" class="btn btn--deny">Je n’ai pas 18 ans</button>
+          </div>
+        </div>
+
+        <div id="age-denied" class="age-gate__content age-gate__content--denied" hidden>
+          <h1 id="denied-title" class="age-gate__title">Accès refusé</h1>
+          <p id="denied-message" class="age-gate__text"></p>
+        </div>
+      </div>
+    </div>
+
+    <div id="site" class="site" hidden>
+      <header class="top">
+        <button type="button" class="brand" id="site-brand" aria-label="Marque">
+          <img id="site-logo" class="brand__logo" src="assets/logo.svg" alt="" />
+          <span id="site-brand-name" class="brand__name">Maria</span>
+        </button>
+      </header>
+
+      <main class="hero">
+        <div class="hero__copy">
+          <p id="hero-brand" class="hero__brand">Maria</p>
+          <h1 class="hero__headline">L’expérience commence ici</h1>
+          <p id="hero-tagline" class="hero__tagline"></p>
+        </div>
+        <div class="hero__visual" aria-hidden="true"></div>
+      </main>
+    </div>
+
+    <script src="config.js"></script>
+    <script src="app.js"></script>
+  </body>
+</html>

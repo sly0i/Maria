@@ -30,7 +30,7 @@
       <header class="admin-top">
         <div>
           <h1>Panneau admin</h1>
-          <p class="muted">Contenu, demandes membres et codes</p>
+          <p class="muted">Contenu, publicité, demandes et codes</p>
         </div>
         <div class="admin-top__actions">
           <a class="btn btn--ghost" href="/">Voir le site</a>
@@ -40,6 +40,7 @@
 
       <nav class="tabs" aria-label="Sections admin">
         <button type="button" class="tabs__btn is-active" data-tab="content">Contenu</button>
+        <button type="button" class="tabs__btn" data-tab="ads">Publicité</button>
         <button type="button" class="tabs__btn" data-tab="members">Demandes</button>
         <button type="button" class="tabs__btn" data-tab="codes">Codes</button>
         <button type="button" class="tabs__btn" data-tab="codes-validated">Codes déjà validés</button>
@@ -107,6 +108,50 @@
           <h2>Vidéos publiées</h2>
           <div id="admin-video-list" class="admin-videos"></div>
           <p id="admin-video-empty" class="muted" hidden>Aucune vidéo pour l’instant.</p>
+        </section>
+      </div>
+
+      <div id="tab-ads" class="tab-panel" hidden>
+        <section class="panel">
+          <h2>Ajouter une publicité</h2>
+          <p class="muted">
+            Upload une affiche (image) ou une vidéo. Elle s’affiche dans le hero de l’accueil ; un clic ouvre le
+            lien de redirect.
+          </p>
+          <form id="ad-form" class="stack">
+            <label>
+              Titre (optionnel, admin)
+              <input type="text" id="ad-title" name="title" maxlength="120" placeholder="Promo partenaire" />
+            </label>
+            <label>
+              Affiche / image / vidéo
+              <input
+                type="file"
+                id="ad-file"
+                name="media"
+                accept="image/*,video/*,.mp4,.mov,.webm,.jpg,.jpeg,.png,.webp"
+                required
+              />
+            </label>
+            <label>
+              Lien de redirect
+              <input
+                type="url"
+                id="ad-redirect"
+                name="redirectUrl"
+                required
+                placeholder="https://exemple.com"
+              />
+            </label>
+            <button type="submit" class="btn btn--primary">Publier la publicité</button>
+            <p id="ad-status" class="status" hidden></p>
+          </form>
+        </section>
+
+        <section class="panel">
+          <h2>Publicités publiées</h2>
+          <div id="admin-ads-list" class="admin-ads"></div>
+          <p id="admin-ads-empty" class="muted" hidden>Aucune publicité pour l’instant.</p>
         </section>
       </div>
 

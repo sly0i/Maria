@@ -19,8 +19,9 @@ const STORE_PATH = path.join(DATA_DIR, "store.json");
 const UPLOADS_DIR = path.join(__dirname, "uploads");
 const VIDEOS_DIR = path.join(UPLOADS_DIR, "videos");
 const LOGO_DIR = path.join(UPLOADS_DIR, "logo");
+const ADS_DIR = path.join(UPLOADS_DIR, "ads");
 
-for (const dir of [DATA_DIR, VIDEOS_DIR, LOGO_DIR]) {
+for (const dir of [DATA_DIR, VIDEOS_DIR, LOGO_DIR, ADS_DIR]) {
   fs.mkdirSync(dir, { recursive: true });
 }
 
@@ -31,6 +32,7 @@ const DEFAULT_STORE = {
   description: "Regarde les dernières publications",
   videos: [],
   members: [],
+  ads: [],
 };
 
 function readStore() {
@@ -45,6 +47,7 @@ function readStore() {
       ...raw,
       videos: Array.isArray(raw.videos) ? raw.videos : [],
       members: Array.isArray(raw.members) ? raw.members : [],
+      ads: Array.isArray(raw.ads) ? raw.ads : [],
     };
   } catch {
     return structuredClone(DEFAULT_STORE);
@@ -308,12 +311,67 @@ const uploadLogo = multer({
   },
 });
 
+const adsStorage = multer.diskStorage({
+  destination: (_req, _file, cb) => cb(null, ADS_DIR),
+  filename: (_req, file, cb) => {
+    const id = crypto.randomUUID();
+    const fallback = file.mimetype.startsWith("video/") ? ".mp4" : ".png";
+    cb(null, `${id}${safeExt(file.originalname, fallback)}`);
+  },
+});
+
+const uploadAd = multer({
+  storage: adsStorage,
+  limits: { fileSize: 200 * 1024 * 1024 },
+  fileFilter: (_req, file, cb) => {
+    if (file.mimetype.startsWith("image/") || file.mimetype.startsWith("video/")) {
+      return cb(null, true);
+    }
+    cb(new Error("Seules les images ou vidéos sont acceptées"));
+  },
+});
+
+function isHttpUrl(value) {
+  try {
+    const u = new URL(String(value || "").trim());
+    return u.protocol === "http:" || u.protocol === "https:";
+  } catch {
+    return false;
+  }
+}
+
+function publicAd(ad) {
+  return {
+    id: ad.id,
+    title: ad.title || "",
+    mediaType: ad.mediaType,
+    url: ad.url,
+    redirectUrl: ad.redirectUrl,
+    createdAt: ad.createdAt,
+  };
+}
+
 const app = express();
 app.use(cookieParser());
 app.use(express.json({ limit: "1mb" }));
 
 app.get("/api/config", (_req, res) => {
   res.json(publicConfig(readStore()));
+});
+
+app.get("/api/ads", (_req, res) => {
+  const store = readStore();
+  const ads = [...store.ads]
+    .filter(
+      (a) =>
+        a?.active !== false &&
+        a?.filename &&
+        a?.redirectUrl &&
+        fs.existsSync(path.join(ADS_DIR, a.filename))
+    )
+    .sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0))
+    .map(publicAd);
+  res.json({ ads });
 });
 
 app.get("/api/videos", (_req, res) => {
@@ -743,10 +801,81 @@ app.delete("/api/admin/videos/:id", requireAdmin, (req, res) => {
   res.json({ ok: true });
 });
 
+app.get("/api/admin/ads", requireAdmin, (_req, res) => {
+  const store = readStore();
+  const ads = [...store.ads]
+    .filter((a) => a?.filename && fs.existsSync(path.join(ADS_DIR, a.filename)))
+    .sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0))
+    .map((a) => ({
+      ...publicAd(a),
+      filename: a.filename,
+      active: a.active !== false,
+    }));
+  res.json({ ads });
+});
+
+app.post("/api/admin/ads", requireAdmin, (req, res) => {
+  uploadAd.single("media")(req, res, (err) => {
+    if (err) return res.status(400).json({ error: err.message });
+    if (!req.file) return res.status(400).json({ error: "Aucun fichier envoyé" });
+
+    const redirectUrl = String(req.body?.redirectUrl || "").trim();
+    const title = String(req.body?.title || "").trim();
+
+    if (!isHttpUrl(redirectUrl)) {
+      fs.unlink(req.file.path, () => {});
+      return res.status(400).json({ error: "Lien de redirect invalide (http/https requis)" });
+    }
+
+    const mediaType = req.file.mimetype.startsWith("video/") ? "video" : "image";
+    const store = readStore();
+    const entry = {
+      id: path.parse(req.file.filename).name,
+      title,
+      mediaType,
+      filename: req.file.filename,
+      url: `/uploads/ads/${req.file.filename}`,
+      redirectUrl,
+      createdAt: Date.now(),
+      active: true,
+    };
+    store.ads.push(entry);
+    writeStore(store);
+    res.status(201).json({ ad: publicAd(entry) });
+  });
+});
+
+app.delete("/api/admin/ads/:id", requireAdmin, (req, res) => {
+  const store = readStore();
+  const index = store.ads.findIndex((a) => a.id === req.params.id);
+  if (index === -1) return res.status(404).json({ error: "Publicité introuvable" });
+
+  const [removed] = store.ads.splice(index, 1);
+  writeStore(store);
+
+  if (removed?.filename) {
+    fs.promises.unlink(path.join(ADS_DIR, removed.filename)).catch(() => {});
+  }
+
+  res.json({ ok: true });
+});
+
 app.use(
   "/uploads/logo",
   express.static(LOGO_DIR, {
     maxAge: "7d",
+  })
+);
+
+app.use(
+  "/uploads/ads",
+  express.static(ADS_DIR, {
+    maxAge: "7d",
+    setHeaders(res, filePath) {
+      if (/\.(mp4|webm|mov|m4v)$/i.test(filePath)) {
+        res.setHeader("Cache-Control", "public, max-age=31536000, immutable");
+      }
+    },
   })
 );
 

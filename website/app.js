@@ -19,7 +19,11 @@
     galleryDescription: document.getElementById("gallery-description"),
     videoList: document.getElementById("video-list"),
     videoEmpty: document.getElementById("video-empty"),
+    heroAds: document.getElementById("hero-ads"),
   };
+
+  let adsTimer = null;
+  let adsIndex = 0;
 
   const auth = window.SiteAuth.createAuthController({
     autoOpenOnEntry: true,
@@ -90,10 +94,114 @@
     }
   }
 
+  function stopAdsCarousel() {
+    if (adsTimer) {
+      clearInterval(adsTimer);
+      adsTimer = null;
+    }
+  }
+
+  function showAdSlide(slides, index) {
+    slides.forEach((slide, i) => {
+      const active = i === index;
+      slide.classList.toggle("is-active", active);
+      slide.setAttribute("aria-hidden", active ? "false" : "true");
+      const video = slide.querySelector("video");
+      if (video) {
+        if (active) {
+          video.play().catch(() => {});
+        } else {
+          video.pause();
+        }
+      }
+    });
+  }
+
+  function renderAds(ads) {
+    if (!els.heroAds) return;
+    stopAdsCarousel();
+    adsIndex = 0;
+
+    const fallback = els.heroAds.querySelector(".hero__visual");
+    els.heroAds.innerHTML = "";
+    if (fallback) els.heroAds.appendChild(fallback);
+
+    if (!ads.length) {
+      els.heroAds.classList.remove("has-ads");
+      if (fallback) fallback.hidden = false;
+      return;
+    }
+
+    els.heroAds.classList.add("has-ads");
+    if (fallback) fallback.hidden = true;
+
+    const track = document.createElement("div");
+    track.className = "hero-ads__track";
+
+    for (const ad of ads) {
+      const slide = document.createElement("a");
+      slide.className = "hero-ads__slide";
+      slide.href = ad.redirectUrl;
+      slide.target = "_blank";
+      slide.rel = "noopener noreferrer";
+      slide.setAttribute("aria-label", ad.title ? `Publicité : ${ad.title}` : "Ouvrir la publicité");
+
+      if (ad.mediaType === "video") {
+        slide.innerHTML = `<video muted loop playsinline autoplay preload="metadata" src="${ad.url}"></video>`;
+      } else {
+        slide.innerHTML = `<img src="${ad.url}" alt="" />`;
+      }
+
+      slide.addEventListener("click", (event) => {
+        // Keep native link behavior; stop video click quirks on iOS
+        event.stopPropagation();
+      });
+
+      track.appendChild(slide);
+    }
+
+    els.heroAds.appendChild(track);
+
+    const slides = [...track.querySelectorAll(".hero-ads__slide")];
+    showAdSlide(slides, 0);
+
+    if (slides.length > 1) {
+      const dots = document.createElement("div");
+      dots.className = "hero-ads__dots";
+      slides.forEach((_, i) => {
+        const dot = document.createElement("button");
+        dot.type = "button";
+        dot.className = "hero-ads__dot";
+        dot.setAttribute("aria-label", `Publicité ${i + 1}`);
+        dot.addEventListener("click", (event) => {
+          event.preventDefault();
+          event.stopPropagation();
+          adsIndex = i;
+          showAdSlide(slides, adsIndex);
+          dots.querySelectorAll(".hero-ads__dot").forEach((d, di) => {
+            d.classList.toggle("is-active", di === adsIndex);
+          });
+        });
+        dots.appendChild(dot);
+      });
+      dots.children[0]?.classList.add("is-active");
+      els.heroAds.appendChild(dots);
+
+      adsTimer = setInterval(() => {
+        adsIndex = (adsIndex + 1) % slides.length;
+        showAdSlide(slides, adsIndex);
+        dots.querySelectorAll(".hero-ads__dot").forEach((d, di) => {
+          d.classList.toggle("is-active", di === adsIndex);
+        });
+      }, 5500);
+    }
+  }
+
   async function loadPublicData() {
-    const [configRes, videosRes] = await Promise.all([
+    const [configRes, videosRes, adsRes] = await Promise.all([
       fetch("/api/config"),
       fetch("/api/videos"),
+      fetch("/api/ads"),
     ]);
 
     if (configRes.ok) {
@@ -103,6 +211,13 @@
     if (videosRes.ok) {
       const data = await videosRes.json();
       renderVideos(data.videos || []);
+    }
+
+    if (adsRes.ok) {
+      const data = await adsRes.json();
+      renderAds(data.ads || []);
+    } else {
+      renderAds([]);
     }
   }
 

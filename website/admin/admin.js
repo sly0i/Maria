@@ -22,9 +22,14 @@
   const codesEmpty = document.getElementById("codes-empty");
   const codesValidatedList = document.getElementById("codes-validated-list");
   const codesValidatedEmpty = document.getElementById("codes-validated-empty");
+  const adForm = document.getElementById("ad-form");
+  const adStatus = document.getElementById("ad-status");
+  const adsList = document.getElementById("admin-ads-list");
+  const adsEmpty = document.getElementById("admin-ads-empty");
   const tabButtons = document.querySelectorAll(".tabs__btn");
   const tabPanels = {
     content: document.getElementById("tab-content"),
+    ads: document.getElementById("tab-ads"),
     members: document.getElementById("tab-members"),
     codes: document.getElementById("tab-codes"),
     "codes-validated": document.getElementById("tab-codes-validated"),
@@ -62,6 +67,7 @@
     tabButtons.forEach((btn) => {
       btn.classList.toggle("is-active", btn.dataset.tab === name);
     });
+    if (name === "ads") loadAds().catch((err) => alert(err.message));
     if (name === "members") loadMembers().catch((err) => alert(err.message));
     if (name === "codes") loadCodes().catch((err) => alert(err.message));
     if (name === "codes-validated") loadValidatedCodes().catch((err) => alert(err.message));
@@ -249,6 +255,50 @@
     }
   }
 
+  async function loadAds() {
+    const data = await api("/api/admin/ads");
+    const ads = data.ads || [];
+    adsList.innerHTML = "";
+
+    if (!ads.length) {
+      adsEmpty.hidden = false;
+      return;
+    }
+
+    adsEmpty.hidden = true;
+
+    for (const ad of ads) {
+      const row = document.createElement("article");
+      row.className = "admin-ad";
+      const media =
+        ad.mediaType === "video"
+          ? `<video class="admin-ad__media" muted playsinline preload="metadata" src="${ad.url}"></video>`
+          : `<img class="admin-ad__media" src="${ad.url}" alt="" />`;
+      row.innerHTML = `
+        ${media}
+        <div class="admin-ad__meta">
+          <strong class="admin-ad__title"></strong>
+          <a class="admin-ad__link" href="#" target="_blank" rel="noopener noreferrer"></a>
+          <button type="button" class="btn btn--danger" data-id="${ad.id}">Supprimer</button>
+        </div>
+      `;
+      row.querySelector(".admin-ad__title").textContent = ad.title || (ad.mediaType === "video" ? "Vidéo" : "Affiche");
+      const link = row.querySelector(".admin-ad__link");
+      link.href = ad.redirectUrl;
+      link.textContent = ad.redirectUrl;
+      row.querySelector("button").addEventListener("click", async () => {
+        if (!confirm("Supprimer cette publicité ?")) return;
+        try {
+          await api(`/api/admin/ads/${ad.id}`, { method: "DELETE" });
+          await loadAds();
+        } catch (err) {
+          alert(err.message);
+        }
+      });
+      adsList.appendChild(row);
+    }
+  }
+
   async function bootAdmin() {
     await loadConfig();
     await loadVideos();
@@ -336,6 +386,29 @@
       await loadVideos();
     } catch (err) {
       setStatus(videoStatus, err.message, false);
+    }
+  });
+
+  adForm?.addEventListener("submit", async (event) => {
+    event.preventDefault();
+    const file = document.getElementById("ad-file").files[0];
+    const redirectUrl = document.getElementById("ad-redirect").value.trim();
+    const title = document.getElementById("ad-title").value.trim();
+    if (!file || !redirectUrl) return;
+
+    const body = new FormData();
+    body.append("media", file);
+    body.append("redirectUrl", redirectUrl);
+    body.append("title", title);
+    setStatus(adStatus, "Upload de la publicité…", true);
+
+    try {
+      await api("/api/admin/ads", { method: "POST", body });
+      adForm.reset();
+      setStatus(adStatus, "Publicité publiée sur l’accueil.", true);
+      await loadAds();
+    } catch (err) {
+      setStatus(adStatus, err.message, false);
     }
   });
 

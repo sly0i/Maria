@@ -76,10 +76,15 @@
       link.innerHTML = `
         <div class="video-card__thumb">
           <span class="video-card__play" aria-hidden="true"></span>
+          <span class="video-card__hd">HD</span>
+          <span class="video-card__time">10:24</span>
         </div>
         <h3 class="video-card__title"></h3>
       `;
       link.querySelector(".video-card__title").textContent = video.title;
+      const mins = String((Number(video.createdAt) % 17) + 4).padStart(2, "0");
+      const secs = String((Number(video.createdAt) % 50) + 10).padStart(2, "0");
+      link.querySelector(".video-card__time").textContent = `${mins}:${secs}`;
 
       link.addEventListener("click", (event) => {
         if (auth.isApproved()) return;
@@ -194,6 +199,20 @@
     if (els.denied && !els.denied.hidden) showGate("prompt");
   });
   els.siteBrand?.addEventListener("click", reopenAgeMessage);
+
+  document.querySelectorAll(".cat-bar__item").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      document.querySelectorAll(".cat-bar__item").forEach((b) => b.classList.remove("is-active"));
+      btn.classList.add("is-active");
+    });
+  });
+
+  document.querySelectorAll(".gallery__tab").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      document.querySelectorAll(".gallery__tab").forEach((b) => b.classList.remove("is-active"));
+      btn.classList.add("is-active");
+    });
+  });
 
   // Hide gate content until brand is applied, so old placeholder name/logo never stick
   if (els.gate) els.gate.style.visibility = "hidden";

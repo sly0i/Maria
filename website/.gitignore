@@ -1,0 +1,7 @@
+node_modules/
+uploads/videos/*
+uploads/logo/*
+!uploads/videos/.gitkeep
+!uploads/logo/.gitkeep
+data/store.json
+.env

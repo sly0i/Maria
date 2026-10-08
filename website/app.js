@@ -1,17 +1,11 @@
 (() => {
   const STORAGE_KEY = "site_age_verified";
-  const cfg = window.SITE_CONFIG || {};
-  const age = cfg.ageGate || {};
 
   const els = {
     gate: document.getElementById("age-gate"),
     site: document.getElementById("site"),
     prompt: document.getElementById("age-prompt"),
     denied: document.getElementById("age-denied"),
-    title: document.getElementById("age-title"),
-    message: document.getElementById("age-message"),
-    deniedTitle: document.getElementById("denied-title"),
-    deniedMessage: document.getElementById("denied-message"),
     btnConfirm: document.getElementById("btn-confirm"),
     btnDeny: document.getElementById("btn-deny"),
     ageBrandTrigger: document.getElementById("age-brand-trigger"),
@@ -22,11 +16,13 @@
     siteBrandName: document.getElementById("site-brand-name"),
     heroBrand: document.getElementById("hero-brand"),
     heroTagline: document.getElementById("hero-tagline"),
+    videoList: document.getElementById("video-list"),
+    videoEmpty: document.getElementById("video-empty"),
   };
 
-  function applyBrand() {
+  function applyBrand(cfg) {
     const name = cfg.brandName || "Mon site";
-    const logo = cfg.logoPath || "assets/logo.svg";
+    const logo = cfg.logoPath || "/assets/logo.svg";
 
     document.title = name;
 
@@ -36,20 +32,54 @@
 
     [els.ageLogo, els.siteLogo].forEach((img) => {
       if (!img) return;
-      img.src = logo;
+      img.src = `${logo}?t=${Date.now()}`;
       img.alt = `Logo ${name}`;
     });
 
     if (els.heroTagline) {
       els.heroTagline.textContent = cfg.tagline || "";
     }
+  }
 
-    if (els.title) els.title.textContent = age.title || "Vérification d’âge";
-    if (els.message) els.message.textContent = age.message || "";
-    if (els.btnConfirm) els.btnConfirm.textContent = age.confirmLabel || "J’ai 18 ans";
-    if (els.btnDeny) els.btnDeny.textContent = age.denyLabel || "Je n’ai pas 18 ans";
-    if (els.deniedTitle) els.deniedTitle.textContent = age.deniedTitle || "Accès refusé";
-    if (els.deniedMessage) els.deniedMessage.textContent = age.deniedMessage || "";
+  function renderVideos(videos) {
+    if (!els.videoList) return;
+    els.videoList.innerHTML = "";
+
+    if (!videos.length) {
+      if (els.videoEmpty) els.videoEmpty.hidden = false;
+      return;
+    }
+
+    if (els.videoEmpty) els.videoEmpty.hidden = true;
+
+    for (const video of videos) {
+      const article = document.createElement("article");
+      article.className = "video-card";
+      article.innerHTML = `
+        <div class="video-card__media">
+          <video controls playsinline preload="metadata" src="${video.url}"></video>
+        </div>
+        <h3 class="video-card__title"></h3>
+      `;
+      article.querySelector(".video-card__title").textContent = video.title;
+      els.videoList.appendChild(article);
+    }
+  }
+
+  async function loadPublicData() {
+    const [configRes, videosRes] = await Promise.all([
+      fetch("/api/config"),
+      fetch("/api/videos"),
+    ]);
+
+    if (configRes.ok) {
+      applyBrand(await configRes.json());
+    }
+
+    if (videosRes.ok) {
+      const data = await videosRes.json();
+      renderVideos(data.videos || []);
+    }
   }
 
   function showGate(mode = "prompt") {
@@ -62,9 +92,7 @@
   function enterSite() {
     try {
       sessionStorage.setItem(STORAGE_KEY, "yes");
-    } catch (_) {
-      /* ignore private mode failures */
-    }
+    } catch (_) {}
     els.gate.hidden = true;
     els.site.hidden = false;
   }
@@ -72,9 +100,7 @@
   function denyAccess() {
     try {
       sessionStorage.setItem(STORAGE_KEY, "no");
-    } catch (_) {
-      /* ignore */
-    }
+    } catch (_) {}
     showGate("denied");
   }
 
@@ -98,21 +124,16 @@
     }
   }
 
-  applyBrand();
-
   els.btnConfirm?.addEventListener("click", enterSite);
   els.btnDeny?.addEventListener("click", denyAccess);
-
-  // Clic sur le nom / logo → message préventif (vérification d’âge)
   els.ageBrandTrigger?.addEventListener("click", () => {
-    if (els.denied && !els.denied.hidden) {
-      showGate("prompt");
-      return;
-    }
-    els.title?.scrollIntoView({ behavior: "smooth", block: "nearest" });
+    if (els.denied && !els.denied.hidden) showGate("prompt");
   });
-
   els.siteBrand?.addEventListener("click", reopenAgeMessage);
+
+  loadPublicData().catch(() => {
+    applyBrand({ brandName: "Maria", logoPath: "/assets/logo.svg", tagline: "" });
+  });
 
   if (isVerified()) {
     els.gate.hidden = true;

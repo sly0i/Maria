@@ -13,7 +13,6 @@
     <link rel="stylesheet" href="styles.css" />
   </head>
   <body>
-    <!-- Overlay âge : bloque tout tant que non validé -->
     <div id="age-gate" class="age-gate" role="dialog" aria-modal="true" aria-labelledby="age-title" hidden>
       <div class="age-gate__panel">
         <button type="button" class="age-gate__brand" id="age-brand-trigger" aria-label="Voir le message d’âge">
@@ -23,7 +22,9 @@
 
         <div id="age-prompt" class="age-gate__content">
           <h1 id="age-title" class="age-gate__title">Vérification d’âge</h1>
-          <p id="age-message" class="age-gate__text"></p>
+          <p id="age-message" class="age-gate__text">
+            Ce site est réservé aux personnes de 18 ans et plus. En continuant, tu confirmes avoir l’âge légal requis.
+          </p>
           <div class="age-gate__actions">
             <button type="button" id="btn-confirm" class="btn btn--confirm">J’ai 18 ans</button>
             <button type="button" id="btn-deny" class="btn btn--deny">Je n’ai pas 18 ans</button>
@@ -32,7 +33,9 @@
 
         <div id="age-denied" class="age-gate__content age-gate__content--denied" hidden>
           <h1 id="denied-title" class="age-gate__title">Accès refusé</h1>
-          <p id="denied-message" class="age-gate__text"></p>
+          <p id="denied-message" class="age-gate__text">
+            Désolé — tu ne peux pas entrer sur ce site si tu as moins de 18 ans.
+          </p>
         </div>
       </div>
     </div>
@@ -45,17 +48,27 @@
         </button>
       </header>
 
-      <main class="hero">
-        <div class="hero__copy">
-          <p id="hero-brand" class="hero__brand">Maria</p>
-          <h1 class="hero__headline">L’expérience commence ici</h1>
-          <p id="hero-tagline" class="hero__tagline"></p>
-        </div>
-        <div class="hero__visual" aria-hidden="true"></div>
+      <main>
+        <section class="hero">
+          <div class="hero__copy">
+            <p id="hero-brand" class="hero__brand">Maria</p>
+            <h1 class="hero__headline">L’expérience commence ici</h1>
+            <p id="hero-tagline" class="hero__tagline"></p>
+          </div>
+          <div class="hero__visual" aria-hidden="true"></div>
+        </section>
+
+        <section class="gallery" aria-labelledby="gallery-title">
+          <div class="gallery__head">
+            <h2 id="gallery-title" class="gallery__title">Vidéos</h2>
+            <p class="gallery__subtitle">Regarde les dernières publications</p>
+          </div>
+          <div id="video-list" class="video-list"></div>
+          <p id="video-empty" class="video-empty" hidden>Aucune vidéo pour le moment.</p>
+        </section>
       </main>
     </div>
 
-    <script src="config.js"></script>
     <script src="app.js"></script>
   </body>
 </html>

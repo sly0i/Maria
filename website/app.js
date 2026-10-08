@@ -53,12 +53,32 @@
     }
   }
 
+  const NEW_WINDOW_MS = 24 * 60 * 60 * 1000;
+  let allVideos = [];
+  let activeFilter = "all";
+
+  function isNewVideo(video) {
+    const created = Number(video.createdAt) || 0;
+    return created > 0 && Date.now() - created < NEW_WINDOW_MS;
+  }
+
+  function videosForFilter(filter) {
+    if (filter === "new") return allVideos.filter(isNewVideo);
+    return allVideos;
+  }
+
   function renderVideos(videos) {
     if (!els.videoList) return;
     els.videoList.innerHTML = "";
 
     if (!videos.length) {
-      if (els.videoEmpty) els.videoEmpty.hidden = false;
+      if (els.videoEmpty) {
+        els.videoEmpty.hidden = false;
+        els.videoEmpty.textContent =
+          activeFilter === "new"
+            ? "Aucune nouvelle vidéo (24 h)."
+            : "Aucune vidéo pour le moment.";
+      }
       return;
     }
 
@@ -95,6 +115,16 @@
       article.appendChild(link);
       els.videoList.appendChild(article);
     }
+  }
+
+  function setFilter(filter) {
+    activeFilter = filter === "new" ? "new" : "all";
+    document.querySelectorAll(".cat-bar__item").forEach((btn) => {
+      btn.classList.toggle("is-active", btn.dataset.filter === activeFilter);
+    });
+    const title = document.getElementById("gallery-title");
+    if (title) title.textContent = activeFilter === "new" ? "Nouveau" : "Vidéos";
+    renderVideos(videosForFilter(activeFilter));
   }
 
   function renderAds(ads) {

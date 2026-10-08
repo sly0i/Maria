@@ -142,12 +142,8 @@
       </header>
 
       <nav class="cat-bar" aria-label="Catégories">
-        <button type="button" class="cat-bar__item is-active">Tout</button>
-        <button type="button" class="cat-bar__item">Nouveau</button>
-        <button type="button" class="cat-bar__item">Tendance</button>
-        <button type="button" class="cat-bar__item">Populaire</button>
-        <button type="button" class="cat-bar__item">Live</button>
-        <button type="button" class="cat-bar__item">Premium</button>
+        <button type="button" class="cat-bar__item is-active" data-filter="all">Tout</button>
+        <button type="button" class="cat-bar__item" data-filter="new">Nouveau</button>
       </nav>
 
       <main class="page">
@@ -162,11 +158,6 @@
         <section class="gallery" aria-labelledby="gallery-title">
           <div class="gallery__bar">
             <h2 id="gallery-title" class="gallery__title">Vidéos</h2>
-            <div class="gallery__tabs" role="tablist" aria-label="Tri">
-              <button type="button" class="gallery__tab is-active">Récentes</button>
-              <button type="button" class="gallery__tab">Hot</button>
-              <button type="button" class="gallery__tab">Top</button>
-            </div>
           </div>
           <div id="video-list" class="video-list"></div>
           <p id="video-empty" class="video-empty" hidden>Aucune vidéo pour le moment.</p>

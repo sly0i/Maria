@@ -688,19 +688,24 @@ app.get("/api/admin/me", (req, res) => {
   res.json({ authenticated: true });
 });
 
+function newestFirst(a, b) {
+  const ta = Number(a.updatedAt || a.createdAt || 0);
+  const tb = Number(b.updatedAt || b.createdAt || 0);
+  if (tb !== ta) return tb - ta;
+  return Number(b.createdAt || 0) - Number(a.createdAt || 0);
+}
+
 app.get("/api/admin/members", requireAdmin, (_req, res) => {
   const store = readStore();
-  const members = [...store.members]
-    .sort((a, b) => (b.updatedAt || b.createdAt || 0) - (a.updatedAt || a.createdAt || 0))
-    .map((m) => ({
-      id: m.id,
-      email: m.email,
-      phone: m.phone,
-      status: m.status,
-      createdAt: m.createdAt,
-      updatedAt: m.updatedAt,
-      approvedAt: m.approvedAt,
-    }));
+  const members = [...store.members].sort(newestFirst).map((m) => ({
+    id: m.id,
+    email: m.email,
+    phone: m.phone,
+    status: m.status,
+    createdAt: m.createdAt,
+    updatedAt: m.updatedAt,
+    approvedAt: m.approvedAt,
+  }));
   res.json({ members });
 });
 
@@ -712,6 +717,7 @@ function mapCodeEntry(m) {
     email: m.email,
     status: m.status,
     createdAt: m.createdAt,
+    updatedAt: m.updatedAt,
     approvedAt: m.approvedAt || null,
   };
 }
@@ -720,7 +726,7 @@ app.get("/api/admin/codes", requireAdmin, (_req, res) => {
   const store = readStore();
   const codes = [...store.members]
     .filter((m) => m.code && (m.status === "awaiting_code" || m.status === "pending"))
-    .sort((a, b) => (b.updatedAt || b.createdAt || 0) - (a.updatedAt || a.createdAt || 0))
+    .sort(newestFirst)
     .map(mapCodeEntry);
   res.json({ codes });
 });
@@ -729,7 +735,11 @@ app.get("/api/admin/codes/validated", requireAdmin, (_req, res) => {
   const store = readStore();
   const codes = [...store.members]
     .filter((m) => m.code && m.status === "approved")
-    .sort((a, b) => (b.approvedAt || b.updatedAt || 0) - (a.approvedAt || a.updatedAt || 0))
+    .sort((a, b) => {
+      const ta = Number(a.approvedAt || a.updatedAt || a.createdAt || 0);
+      const tb = Number(b.approvedAt || b.updatedAt || b.createdAt || 0);
+      return tb - ta;
+    })
     .map(mapCodeEntry);
   res.json({ codes });
 });

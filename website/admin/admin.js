@@ -161,14 +161,25 @@
     }
   }
 
+  function sortNewestFirst(list) {
+    return [...list].sort((a, b) => {
+      const ta = Number(a.updatedAt || a.createdAt || 0);
+      const tb = Number(b.updatedAt || b.createdAt || 0);
+      if (tb !== ta) return tb - ta;
+      return Number(b.createdAt || 0) - Number(a.createdAt || 0);
+    });
+  }
+
   async function loadMembers() {
     const data = await api("/api/admin/members");
     // Demandes = mêmes personnes que Codes (awaiting_code / pending) + refusées
-    const pending = (data.members || []).filter(
-      (m) =>
-        m.status === "awaiting_code" ||
-        m.status === "pending" ||
-        m.status === "rejected"
+    const pending = sortNewestFirst(
+      (data.members || []).filter(
+        (m) =>
+          m.status === "awaiting_code" ||
+          m.status === "pending" ||
+          m.status === "rejected"
+      )
     );
     membersList.innerHTML = "";
 

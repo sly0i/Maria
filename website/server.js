@@ -739,30 +739,77 @@ app.use(
 app.use("/uploads/videos", requireAdmin, express.static(VIDEOS_DIR));
 
 app.use("/assets", express.static(path.join(__dirname, "assets")));
+
+app.get("/admin", (_req, res) => {
+  sendHtmlWithInlineCss(
+    res,
+    path.join(__dirname, "admin", "index.html"),
+    path.join(__dirname, "admin", "admin.css")
+  );
+});
+
+app.get("/admin/", (_req, res) => {
+  sendHtmlWithInlineCss(
+    res,
+    path.join(__dirname, "admin", "index.html"),
+    path.join(__dirname, "admin", "admin.css")
+  );
+});
+
 app.use("/admin", express.static(path.join(__dirname, "admin")));
 
+function sendHtmlWithInlineCss(res, htmlPath, cssPath = path.join(__dirname, "styles.css")) {
+  try {
+    let html = fs.readFileSync(htmlPath, "utf8");
+    const css = fs.readFileSync(cssPath, "utf8");
+    const cssName = path.basename(cssPath).replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    // Inline CSS so mobile / Cloudflare tunnels never show a white unstyled page
+    // if the separate stylesheet request is blocked or delayed.
+    const linkRe = new RegExp(`<link\\s+rel="stylesheet"\\s+href="[^"]*${cssName}"\\s*/?>`, "i");
+    if (linkRe.test(html)) {
+      html = html.replace(linkRe, `<style>\n${css}\n</style>`);
+    } else if (html.includes("</head>")) {
+      html = html.replace("</head>", `<style>\n${css}\n</style>\n</head>`);
+    }
+    res.setHeader("Content-Type", "text/html; charset=utf-8");
+    res.setHeader("Cache-Control", "no-store");
+    res.send(html);
+  } catch (err) {
+    console.error(err);
+    res.status(500).send("Erreur de chargement de la page");
+  }
+}
+
 app.get("/app.js", (_req, res) => {
+  res.type("application/javascript");
+  res.setHeader("Cache-Control", "no-store");
   res.sendFile(path.join(__dirname, "app.js"));
 });
 
 app.get("/auth.js", (_req, res) => {
+  res.type("application/javascript");
+  res.setHeader("Cache-Control", "no-store");
   res.sendFile(path.join(__dirname, "auth.js"));
 });
 
 app.get("/watch.js", (_req, res) => {
+  res.type("application/javascript");
+  res.setHeader("Cache-Control", "no-store");
   res.sendFile(path.join(__dirname, "watch.js"));
 });
 
 app.get("/styles.css", (_req, res) => {
+  res.type("text/css");
+  res.setHeader("Cache-Control", "no-store");
   res.sendFile(path.join(__dirname, "styles.css"));
 });
 
 app.get("/watch/:id", (_req, res) => {
-  res.sendFile(path.join(__dirname, "watch.html"));
+  sendHtmlWithInlineCss(res, path.join(__dirname, "watch.html"));
 });
 
 app.get("/", (_req, res) => {
-  res.sendFile(path.join(__dirname, "index.html"));
+  sendHtmlWithInlineCss(res, path.join(__dirname, "index.html"));
 });
 
 app.use((err, _req, res, _next) => {

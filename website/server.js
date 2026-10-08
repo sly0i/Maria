@@ -463,7 +463,7 @@ app.post("/api/auth/verify-code", (req, res) => {
     });
   }
   if (member.code !== code) {
-    return res.status(401).json({ error: "Code incorrect" });
+    return res.status(401).json({ error: "retry" });
   }
 
   member.status = "pending";

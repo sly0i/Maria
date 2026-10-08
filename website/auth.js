@@ -60,7 +60,6 @@
       codeForm: $("code-form"),
       registerBack: $("register-back"),
       registerError: $("register-error"),
-      codeError: $("code-error"),
       registerPending: $("register-pending"),
       openBtn: $("auth-open"),
       logoutBtn: $("auth-logout"),
@@ -94,7 +93,6 @@
       setHidden(els.codeForm, step !== "code");
       setHidden(els.registerPending, step !== "pending");
       setText(els.registerError, "", true);
-      setText(els.codeError, "", true);
     }
 
     function updateChrome() {
@@ -268,20 +266,21 @@
 
     els.codeForm?.addEventListener("submit", async (event) => {
       event.preventDefault();
-      setText(els.codeError, "", true);
+      const codeInput = $("register-code");
       try {
         const data = await api("/api/auth/verify-code", {
           method: "POST",
           body: JSON.stringify({
             email: $("register-email").value || member?.email,
-            code: $("register-code").value,
+            code: codeInput?.value,
           }),
         });
         member = data.member;
         updateChrome();
         resetRegisterStep("pending");
-      } catch (err) {
-        setText(els.codeError, err.message);
+      } catch {
+        // Pas de message d’erreur : le code arrive sur le téléphone, on vide juste le champ
+        if (codeInput) codeInput.value = "";
       }
     });
 

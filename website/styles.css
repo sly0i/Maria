@@ -318,32 +318,135 @@ body {
   display: none !important;
 }
 
-.ads-list {
-  display: grid;
-  gap: 0.55rem;
-}
-
-.ad-card {
-  display: block;
+.ads-carousel {
+  position: relative;
   overflow: hidden;
-  text-decoration: none;
   border: 1px solid #2a2a2a;
   background: #111;
 }
 
+.ads-list {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 16 / 7;
+  max-height: 220px;
+}
+
+.ad-card {
+  position: absolute;
+  inset: 0;
+  display: block;
+  overflow: hidden;
+  text-decoration: none;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.45s ease;
+  z-index: 0;
+}
+
+.ad-card.is-active {
+  opacity: 1;
+  visibility: visible;
+  z-index: 1;
+}
+
 .ad-card:hover,
 .ad-card:focus-visible {
-  border-color: var(--accent);
   outline: none;
 }
 
 .ad-card__media {
   display: block;
   width: 100%;
-  aspect-ratio: 16 / 5;
-  max-height: 170px;
+  height: 100%;
   object-fit: cover;
   background: #1a1a1a;
+}
+
+.ad-card__shade {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    180deg,
+    rgba(0, 0, 0, 0.15) 0%,
+    rgba(0, 0, 0, 0.05) 40%,
+    rgba(0, 0, 0, 0.72) 100%
+  );
+  pointer-events: none;
+}
+
+.ad-card__badge {
+  position: absolute;
+  top: 0.55rem;
+  left: 0.55rem;
+  z-index: 2;
+  padding: 0.22rem 0.45rem;
+  background: var(--accent);
+  color: #fff;
+  font-family: var(--font-display);
+  font-size: 0.62rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.ad-card__meta {
+  position: absolute;
+  left: 0.7rem;
+  right: 0.7rem;
+  bottom: 1.35rem;
+  z-index: 2;
+  display: grid;
+  gap: 0.2rem;
+  pointer-events: none;
+}
+
+.ad-card__title {
+  margin: 0;
+  color: #fff;
+  font-family: var(--font-display);
+  font-size: clamp(0.95rem, 3.2vw, 1.2rem);
+  font-weight: 800;
+  line-height: 1.2;
+  text-shadow: 0 1px 8px rgba(0, 0, 0, 0.55);
+}
+
+.ad-card__cta {
+  margin: 0;
+  color: var(--accent-2);
+  font-size: 0.82rem;
+  font-weight: 700;
+}
+
+.ads-dots {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0.45rem;
+  z-index: 3;
+  display: flex;
+  justify-content: center;
+  gap: 0.35rem;
+  pointer-events: none;
+}
+
+.ads-dots[hidden] {
+  display: none !important;
+}
+
+.ads-dots__dot {
+  width: 0.45rem;
+  height: 0.45rem;
+  border-radius: 999px;
+  border: 0;
+  padding: 0;
+  background: rgba(255, 255, 255, 0.35);
+  cursor: pointer;
+  pointer-events: auto;
+}
+
+.ads-dots__dot.is-active {
+  background: #fff;
 }
 
 .gallery__bar {
@@ -407,9 +510,9 @@ body {
     padding: 0.9rem 1rem 2rem;
   }
 
-  .ad-card__media {
-    aspect-ratio: 16 / 4;
-    max-height: 190px;
+  .ads-list {
+    aspect-ratio: 16 / 5;
+    max-height: 240px;
   }
 }
 

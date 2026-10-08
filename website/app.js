@@ -21,7 +21,11 @@
     videoEmpty: document.getElementById("video-empty"),
     adsSection: document.getElementById("ads-section"),
     adsList: document.getElementById("ads-list"),
+    adsDots: document.getElementById("ads-dots"),
   };
+
+  let adsTimer = null;
+  let adsIndex = 0;
 
   const auth = window.SiteAuth.createAuthController({
     autoOpenOnEntry: true,
@@ -145,9 +149,47 @@
     renderVideos(videosForFilter(activeFilter));
   }
 
+  function stopAdsCarousel() {
+    if (adsTimer) {
+      clearInterval(adsTimer);
+      adsTimer = null;
+    }
+  }
+
+  function showAdSlide(index) {
+    const slides = els.adsList?.querySelectorAll(".ad-card");
+    if (!slides?.length) return;
+    adsIndex = ((index % slides.length) + slides.length) % slides.length;
+    slides.forEach((slide, i) => {
+      slide.classList.toggle("is-active", i === adsIndex);
+      const video = slide.querySelector("video");
+      if (video) {
+        if (i === adsIndex) {
+          video.play?.().catch(() => {});
+        } else {
+          video.pause?.();
+        }
+      }
+    });
+    els.adsDots?.querySelectorAll(".ads-dots__dot").forEach((dot, i) => {
+      dot.classList.toggle("is-active", i === adsIndex);
+    });
+  }
+
+  function startAdsCarousel(count) {
+    stopAdsCarousel();
+    if (count <= 1) return;
+    adsTimer = setInterval(() => showAdSlide(adsIndex + 1), 5000);
+  }
+
   function renderAds(ads) {
     if (!els.adsSection || !els.adsList) return;
+    stopAdsCarousel();
     els.adsList.innerHTML = "";
+    if (els.adsDots) {
+      els.adsDots.innerHTML = "";
+      els.adsDots.hidden = true;
+    }
 
     if (!ads.length) {
       els.adsSection.hidden = true;
@@ -155,24 +197,55 @@
     }
 
     els.adsSection.hidden = false;
+    adsIndex = 0;
 
-    for (const ad of ads) {
+    ads.forEach((ad, index) => {
       const link = document.createElement("a");
-      link.className = "ad-card";
+      link.className = "ad-card" + (index === 0 ? " is-active" : "");
       link.href = ad.redirectUrl;
       link.target = "_blank";
       link.rel = "noopener noreferrer";
       link.setAttribute("aria-label", ad.title ? `Publicité : ${ad.title}` : "Ouvrir la publicité");
 
-      if (ad.mediaType === "video") {
-        link.innerHTML = `<video class="ad-card__media" muted loop playsinline autoplay preload="metadata" src="${ad.url}"></video>`;
-      } else {
-        link.innerHTML = `<img class="ad-card__media" src="${ad.url}" alt="" />`;
-      }
+      const media =
+        ad.mediaType === "video"
+          ? `<video class="ad-card__media" muted loop playsinline autoplay preload="metadata" src="${ad.url}"></video>`
+          : `<img class="ad-card__media" src="${ad.url}" alt="" />`;
+
+      const title = ad.title ? String(ad.title) : "";
+      link.innerHTML = `
+        ${media}
+        <span class="ad-card__shade" aria-hidden="true"></span>
+        <span class="ad-card__badge">Pub</span>
+        <span class="ad-card__meta">
+          ${title ? `<span class="ad-card__title"></span>` : ""}
+          <span class="ad-card__cta">Voir l’offre ➔</span>
+        </span>
+      `;
+      const titleEl = link.querySelector(".ad-card__title");
+      if (titleEl) titleEl.textContent = title;
 
       link.addEventListener("click", () => trackStat("ad_click"));
       els.adsList.appendChild(link);
+    });
+
+    if (ads.length > 1 && els.adsDots) {
+      els.adsDots.hidden = false;
+      ads.forEach((_, index) => {
+        const dot = document.createElement("button");
+        dot.type = "button";
+        dot.className = "ads-dots__dot" + (index === 0 ? " is-active" : "");
+        dot.setAttribute("aria-label", `Publicité ${index + 1}`);
+        dot.addEventListener("click", () => {
+          showAdSlide(index);
+          startAdsCarousel(ads.length);
+        });
+        els.adsDots.appendChild(dot);
+      });
     }
+
+    showAdSlide(0);
+    startAdsCarousel(ads.length);
   }
 
   async function loadPublicData() {

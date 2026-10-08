@@ -79,6 +79,8 @@
     } catch (_) {}
   }
 
+  let playerStarted = false;
+
   function loadPlayer() {
     if (!auth.isApproved() || !els.player) {
       showLocked(auth.getMember());
@@ -87,7 +89,10 @@
     els.locked.hidden = true;
     els.player.hidden = false;
     els.player.src = `/api/videos/${encodeURIComponent(videoId)}/stream`;
-    trackStat("watch_view");
+    if (!playerStarted) {
+      playerStarted = true;
+      trackStat("watch_view");
+    }
   }
 
   async function loadVideoMeta() {

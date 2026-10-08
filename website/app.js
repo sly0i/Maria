@@ -207,23 +207,48 @@
       link.rel = "noopener noreferrer";
       link.setAttribute("aria-label", ad.title ? `Publicité : ${ad.title}` : "Ouvrir la publicité");
 
-      const media =
-        ad.mediaType === "video"
-          ? `<video class="ad-card__media" muted loop playsinline autoplay preload="metadata" src="${ad.url}"></video>`
-          : `<img class="ad-card__media" src="${ad.url}" alt="" />`;
-
       const title = ad.title ? String(ad.title) : "";
-      link.innerHTML = `
-        ${media}
-        <span class="ad-card__shade" aria-hidden="true"></span>
-        <span class="ad-card__badge">Pub</span>
-        <span class="ad-card__meta">
-          ${title ? `<span class="ad-card__title"></span>` : ""}
-          <span class="ad-card__cta">Voir l’offre ➔</span>
-        </span>
-      `;
-      const titleEl = link.querySelector(".ad-card__title");
-      if (titleEl) titleEl.textContent = title;
+      if (ad.mediaType === "video") {
+        const video = document.createElement("video");
+        video.className = "ad-card__media";
+        video.muted = true;
+        video.loop = true;
+        video.playsInline = true;
+        video.autoplay = true;
+        video.preload = "metadata";
+        video.src = ad.url;
+        link.appendChild(video);
+      } else {
+        const img = document.createElement("img");
+        img.className = "ad-card__media";
+        img.src = ad.url;
+        img.alt = "";
+        link.appendChild(img);
+      }
+
+      const shade = document.createElement("span");
+      shade.className = "ad-card__shade";
+      shade.setAttribute("aria-hidden", "true");
+      link.appendChild(shade);
+
+      const badge = document.createElement("span");
+      badge.className = "ad-card__badge";
+      badge.textContent = "Pub";
+      link.appendChild(badge);
+
+      const meta = document.createElement("span");
+      meta.className = "ad-card__meta";
+      if (title) {
+        const titleEl = document.createElement("span");
+        titleEl.className = "ad-card__title";
+        titleEl.textContent = title;
+        meta.appendChild(titleEl);
+      }
+      const cta = document.createElement("span");
+      cta.className = "ad-card__cta";
+      cta.textContent = "Voir l’offre ➔";
+      meta.appendChild(cta);
+      link.appendChild(meta);
 
       link.addEventListener("click", () => trackStat("ad_click"));
       els.adsList.appendChild(link);

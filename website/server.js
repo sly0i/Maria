@@ -10,12 +10,51 @@ import { promisify } from "util";
 
 const execFileAsync = promisify(execFile);
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
+
+function loadDotEnv() {
+  const envPath = path.join(__dirname, ".env");
+  if (!fs.existsSync(envPath)) return;
+  for (const line of fs.readFileSync(envPath, "utf8").split("\n")) {
+    const trimmed = line.trim();
+    if (!trimmed || trimmed.startsWith("#")) continue;
+    const eq = trimmed.indexOf("=");
+    if (eq <= 0) continue;
+    const key = trimmed.slice(0, eq).trim();
+    let value = trimmed.slice(eq + 1).trim();
+    if (
+      (value.startsWith('"') && value.endsWith('"')) ||
+      (value.startsWith("'") && value.endsWith("'"))
+    ) {
+      value = value.slice(1, -1);
+    }
+    if (!(key in process.env)) process.env[key] = value;
+  }
+}
+loadDotEnv();
+
 const PORT = Number(process.env.PORT || 8765);
-const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || "admin123";
-const SESSION_SECRET = process.env.SESSION_SECRET || "maria-dev-secret";
+const IS_PROD = process.env.NODE_ENV === "production";
+const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || (IS_PROD ? "" : "admin123");
+const SESSION_SECRET = process.env.SESSION_SECRET || (IS_PROD ? "" : "maria-dev-secret");
+const COOKIE_SECURE =
+  process.env.COOKIE_SECURE === "1" ||
+  process.env.COOKIE_SECURE === "true" ||
+  IS_PROD;
+
+if (IS_PROD) {
+  if (!ADMIN_PASSWORD || ADMIN_PASSWORD === "admin123" || ADMIN_PASSWORD === "change-me") {
+    console.error("FATAL: définis un ADMIN_PASSWORD fort (variable d’environnement).");
+    process.exit(1);
+  }
+  if (!SESSION_SECRET || SESSION_SECRET === "maria-dev-secret" || SESSION_SECRET.length < 24) {
+    console.error("FATAL: définis un SESSION_SECRET fort (≥ 24 caractères).");
+    process.exit(1);
+  }
+}
 
 const DATA_DIR = path.join(__dirname, "data");
 const STORE_PATH = path.join(DATA_DIR, "store.json");
+const STORE_BAK_PATH = path.join(DATA_DIR, "store.json.bak");
 const UPLOADS_DIR = path.join(__dirname, "uploads");
 const VIDEOS_DIR = path.join(UPLOADS_DIR, "videos");
 const LOGO_DIR = path.join(UPLOADS_DIR, "logo");
@@ -23,6 +62,29 @@ const ADS_DIR = path.join(UPLOADS_DIR, "ads");
 
 for (const dir of [DATA_DIR, VIDEOS_DIR, LOGO_DIR, ADS_DIR]) {
   fs.mkdirSync(dir, { recursive: true });
+}
+
+let lastGoodStore = null;
+const rateBuckets = new Map();
+
+function rateLimit(key, max, windowMs) {
+  const now = Date.now();
+  let entry = rateBuckets.get(key);
+  if (!entry || now > entry.resetAt) {
+    entry = { count: 0, resetAt: now + windowMs };
+    rateBuckets.set(key, entry);
+  }
+  entry.count += 1;
+  return entry.count <= max;
+}
+
+function cookieOptions(maxAge) {
+  return {
+    httpOnly: true,
+    sameSite: "lax",
+    secure: COOKIE_SECURE,
+    maxAge,
+  };
 }
 
 const DEFAULT_STATS = {
@@ -57,6 +119,17 @@ function normalizeStats(raw) {
   };
 }
 
+function normalizeStore(raw) {
+  return {
+    ...DEFAULT_STORE,
+    ...raw,
+    videos: Array.isArray(raw.videos) ? raw.videos : [],
+    members: Array.isArray(raw.members) ? raw.members : [],
+    ads: Array.isArray(raw.ads) ? raw.ads : [],
+    stats: normalizeStats(raw.stats),
+  };
+}
+
 function readStore() {
   try {
     if (!fs.existsSync(STORE_PATH)) {
@@ -64,15 +137,22 @@ function readStore() {
       return structuredClone(DEFAULT_STORE);
     }
     const raw = JSON.parse(fs.readFileSync(STORE_PATH, "utf8"));
-    return {
-      ...DEFAULT_STORE,
-      ...raw,
-      videos: Array.isArray(raw.videos) ? raw.videos : [],
-      members: Array.isArray(raw.members) ? raw.members : [],
-      ads: Array.isArray(raw.ads) ? raw.ads : [],
-      stats: normalizeStats(raw.stats),
-    };
-  } catch {
+    const store = normalizeStore(raw);
+    lastGoodStore = structuredClone(store);
+    return store;
+  } catch (err) {
+    console.error("store.json illisible, tentative de secours…", err.message);
+    try {
+      if (fs.existsSync(STORE_BAK_PATH)) {
+        const raw = JSON.parse(fs.readFileSync(STORE_BAK_PATH, "utf8"));
+        const store = normalizeStore(raw);
+        lastGoodStore = structuredClone(store);
+        return store;
+      }
+    } catch (bakErr) {
+      console.error("store.json.bak illisible", bakErr.message);
+    }
+    if (lastGoodStore) return structuredClone(lastGoodStore);
     return structuredClone(DEFAULT_STORE);
   }
 }
@@ -87,7 +167,18 @@ function bumpStat(key, by = 1) {
 }
 
 function writeStore(store) {
-  fs.writeFileSync(STORE_PATH, JSON.stringify(store, null, 2), "utf8");
+  const payload = JSON.stringify(store, null, 2);
+  const tmp = `${STORE_PATH}.${process.pid}.tmp`;
+  fs.writeFileSync(tmp, payload, "utf8");
+  if (fs.existsSync(STORE_PATH)) {
+    try {
+      fs.copyFileSync(STORE_PATH, STORE_BAK_PATH);
+    } catch {
+      /* ignore backup errors */
+    }
+  }
+  fs.renameSync(tmp, STORE_PATH);
+  lastGoodStore = structuredClone(store);
 }
 
 function signToken(payload) {
@@ -165,7 +256,7 @@ function isValidPhone(phone) {
 }
 
 function generateCode() {
-  return String(Math.floor(1000 + Math.random() * 9000));
+  return String(crypto.randomInt(1000, 10000));
 }
 
 function setMemberCookie(res, memberId) {
@@ -173,11 +264,7 @@ function setMemberCookie(res, memberId) {
     memberId,
     exp: Date.now() + 1000 * 60 * 60 * 24 * 30,
   });
-  res.cookie("member_session", token, {
-    httpOnly: true,
-    sameSite: "lax",
-    maxAge: 1000 * 60 * 60 * 24 * 30,
-  });
+  res.cookie("member_session", token, cookieOptions(1000 * 60 * 60 * 24 * 30));
 }
 
 function safeExt(originalName, fallback) {
@@ -384,6 +471,9 @@ function publicAd(ad) {
 }
 
 const app = express();
+if (IS_PROD || process.env.TRUST_PROXY === "1") {
+  app.set("trust proxy", 1);
+}
 app.use(cookieParser());
 app.use(express.json({ limit: "1mb" }));
 
@@ -483,6 +573,11 @@ app.get("/api/auth/me", (req, res) => {
 });
 
 app.post("/api/auth/register", (req, res) => {
+  const ip = req.ip || req.socket?.remoteAddress || "unknown";
+  if (!rateLimit(`register:${ip}`, 20, 15 * 60 * 1000)) {
+    return res.status(429).json({ error: "Trop de tentatives. Réessaie plus tard." });
+  }
+
   const email = normalizeEmail(req.body?.email);
   const phone = normalizePhone(req.body?.phone);
 
@@ -559,6 +654,11 @@ app.post("/api/auth/register", (req, res) => {
 });
 
 app.post("/api/auth/verify-code", (req, res) => {
+  const ip = req.ip || req.socket?.remoteAddress || "unknown";
+  if (!rateLimit(`verify:${ip}`, 40, 15 * 60 * 1000)) {
+    return res.status(429).json({ error: "Trop de tentatives. Réessaie plus tard." });
+  }
+
   const email = normalizeEmail(req.body?.email);
   const code = String(req.body?.code || "").trim();
 
@@ -605,6 +705,11 @@ app.post("/api/auth/verify-code", (req, res) => {
 });
 
 app.post("/api/auth/login", (req, res) => {
+  const ip = req.ip || req.socket?.remoteAddress || "unknown";
+  if (!rateLimit(`login:${ip}`, 30, 15 * 60 * 1000)) {
+    return res.status(429).json({ error: "Trop de tentatives. Réessaie plus tard." });
+  }
+
   const email = normalizeEmail(req.body?.email);
   const code = String(req.body?.code || "").trim();
 
@@ -656,29 +761,29 @@ app.post("/api/auth/login", (req, res) => {
 });
 
 app.post("/api/auth/logout", (_req, res) => {
-  res.clearCookie("member_session");
+  res.clearCookie("member_session", cookieOptions(0));
   res.json({ ok: true });
 });
 
 app.post("/api/admin/login", (req, res) => {
+  const ip = req.ip || req.socket?.remoteAddress || "unknown";
+  if (!rateLimit(`admin-login:${ip}`, 15, 15 * 60 * 1000)) {
+    return res.status(429).json({ error: "Trop de tentatives. Réessaie plus tard." });
+  }
   const password = String(req.body?.password || "");
-  if (password !== ADMIN_PASSWORD) {
+  if (!ADMIN_PASSWORD || password !== ADMIN_PASSWORD) {
     return res.status(401).json({ error: "Mot de passe incorrect" });
   }
   const token = signToken({
     admin: true,
     exp: Date.now() + 1000 * 60 * 60 * 24 * 7,
   });
-  res.cookie("admin_session", token, {
-    httpOnly: true,
-    sameSite: "lax",
-    maxAge: 1000 * 60 * 60 * 24 * 7,
-  });
+  res.cookie("admin_session", token, cookieOptions(1000 * 60 * 60 * 24 * 7));
   res.json({ ok: true });
 });
 
 app.post("/api/admin/logout", (_req, res) => {
-  res.clearCookie("admin_session");
+  res.clearCookie("admin_session", cookieOptions(0));
   res.json({ ok: true });
 });
 
@@ -1132,9 +1237,10 @@ app.use((err, _req, res, _next) => {
 app.listen(PORT, "0.0.0.0", () => {
   console.log(`Site prêt sur http://0.0.0.0:${PORT}`);
   console.log(`Admin : http://0.0.0.0:${PORT}/admin`);
-  console.log(
-    `Mot de passe admin par défaut : ${
-      ADMIN_PASSWORD === "admin123" ? "admin123 (à changer via ADMIN_PASSWORD)" : "(défini via env)"
-    }`
-  );
+  if (ADMIN_PASSWORD === "admin123") {
+    console.log("Mot de passe admin : admin123 (change-le via ADMIN_PASSWORD avant la prod)");
+  } else {
+    console.log("Mot de passe admin : défini via environnement");
+  }
+  if (COOKIE_SECURE) console.log("Cookies sécurisés (HTTPS) activés");
 });

@@ -30,7 +30,7 @@
       <header class="admin-top">
         <div>
           <h1>Panneau admin</h1>
-          <p class="muted">Nom, description, logo et vidéos</p>
+          <p class="muted">Contenu, demandes membres et codes</p>
         </div>
         <div class="admin-top__actions">
           <a class="btn btn--ghost" href="/">Voir le site</a>
@@ -38,60 +38,97 @@
         </div>
       </header>
 
-      <section class="panel">
-        <h2>Identité</h2>
-        <form id="brand-form" class="stack">
-          <label>
-            Nom du site
-            <input type="text" id="brand-name" name="brandName" required maxlength="80" />
-          </label>
-          <label>
-            Phrase d’accueil
-            <input type="text" id="brand-tagline" name="tagline" maxlength="200" />
-          </label>
-          <label>
-            Description du site
-            <textarea id="brand-description" name="description" rows="3" maxlength="280" placeholder="Regarde les dernières publications"></textarea>
-          </label>
-          <button type="submit" class="btn btn--primary">Enregistrer</button>
-          <p id="brand-status" class="status" hidden></p>
-        </form>
+      <nav class="tabs" aria-label="Sections admin">
+        <button type="button" class="tabs__btn is-active" data-tab="content">Contenu</button>
+        <button type="button" class="tabs__btn" data-tab="members">Demandes</button>
+        <button type="button" class="tabs__btn" data-tab="codes">Codes</button>
+      </nav>
 
-        <form id="logo-form" class="stack" style="margin-top: 1.5rem">
-          <label>
-            Nouveau logo (image)
-            <input type="file" id="logo-file" name="logo" accept="image/*" required />
-          </label>
-          <div class="logo-preview-wrap">
-            <img id="logo-preview" class="logo-preview" src="/assets/logo.svg" alt="Logo actuel" />
-          </div>
-          <button type="submit" class="btn btn--primary">Uploader le logo</button>
-          <p id="logo-status" class="status" hidden></p>
-        </form>
-      </section>
+      <div id="tab-content" class="tab-panel">
+        <section class="panel">
+          <h2>Identité</h2>
+          <form id="brand-form" class="stack">
+            <label>
+              Nom du site
+              <input type="text" id="brand-name" name="brandName" required maxlength="80" />
+            </label>
+            <label>
+              Phrase d’accueil
+              <input type="text" id="brand-tagline" name="tagline" maxlength="200" />
+            </label>
+            <label>
+              Description du site
+              <textarea
+                id="brand-description"
+                name="description"
+                rows="3"
+                maxlength="280"
+                placeholder="Regarde les dernières publications"
+              ></textarea>
+            </label>
+            <button type="submit" class="btn btn--primary">Enregistrer</button>
+            <p id="brand-status" class="status" hidden></p>
+          </form>
 
-      <section class="panel">
-        <h2>Ajouter une vidéo</h2>
-        <form id="video-form" class="stack">
-          <label>
-            Titre (affiché sous la vidéo)
-            <input type="text" id="video-title" name="title" required maxlength="160" />
-          </label>
-          <label>
-            Fichier vidéo
-            <input type="file" id="video-file" name="video" accept="video/*,.mp4,.mov,.m4v,.webm" required />
-          </label>
-          <p class="muted">Les vidéos iPhone (.mov) sont converties automatiquement en MP4 pour marcher sur tous les téléphones.</p>
-          <button type="submit" class="btn btn--primary">Uploader la vidéo</button>
-          <p id="video-status" class="status" hidden></p>
-        </form>
-      </section>
+          <form id="logo-form" class="stack" style="margin-top: 1.5rem">
+            <label>
+              Nouveau logo (image)
+              <input type="file" id="logo-file" name="logo" accept="image/*" required />
+            </label>
+            <div class="logo-preview-wrap">
+              <img id="logo-preview" class="logo-preview" src="/assets/logo.svg" alt="Logo actuel" />
+            </div>
+            <button type="submit" class="btn btn--primary">Uploader le logo</button>
+            <p id="logo-status" class="status" hidden></p>
+          </form>
+        </section>
 
-      <section class="panel">
-        <h2>Vidéos publiées</h2>
-        <div id="admin-video-list" class="admin-videos"></div>
-        <p id="admin-video-empty" class="muted" hidden>Aucune vidéo pour l’instant.</p>
-      </section>
+        <section class="panel">
+          <h2>Ajouter une vidéo</h2>
+          <form id="video-form" class="stack">
+            <label>
+              Titre (affiché sous la vidéo)
+              <input type="text" id="video-title" name="title" required maxlength="160" />
+            </label>
+            <label>
+              Fichier vidéo
+              <input type="file" id="video-file" name="video" accept="video/*,.mp4,.mov,.m4v,.webm" required />
+            </label>
+            <p class="muted">
+              Les vidéos iPhone (.mov) sont converties automatiquement en MP4 pour marcher sur tous les téléphones.
+            </p>
+            <button type="submit" class="btn btn--primary">Uploader la vidéo</button>
+            <p id="video-status" class="status" hidden></p>
+          </form>
+        </section>
+
+        <section class="panel">
+          <h2>Vidéos publiées</h2>
+          <div id="admin-video-list" class="admin-videos"></div>
+          <p id="admin-video-empty" class="muted" hidden>Aucune vidéo pour l’instant.</p>
+        </section>
+      </div>
+
+      <div id="tab-members" class="tab-panel" hidden>
+        <section class="panel">
+          <h2>Demandes de comptes</h2>
+          <p class="muted">Valide ou refuse les membres qui ont finalisé leur inscription avec le code.</p>
+          <div id="members-list" class="member-list"></div>
+          <p id="members-empty" class="muted" hidden>Aucune demande en attente.</p>
+        </section>
+      </div>
+
+      <div id="tab-codes" class="tab-panel" hidden>
+        <section class="panel">
+          <h2>Numéros & codes</h2>
+          <p class="muted">
+            Communique le code à 4 chiffres à la personne (SMS, appel, etc.) pour qu’elle puisse finaliser son
+            inscription.
+          </p>
+          <div id="codes-list" class="code-list"></div>
+          <p id="codes-empty" class="muted" hidden>Aucun code en attente pour le moment.</p>
+        </section>
+      </div>
     </div>
 
     <script src="/admin/admin.js"></script>

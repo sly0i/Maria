@@ -21,6 +21,10 @@
     videoEmpty: document.getElementById("video-empty"),
   };
 
+  const auth = window.SiteAuth.createAuthController({
+    autoOpenOnEntry: true,
+  });
+
   function applyBrand(cfg) {
     const name = cfg.brandName || "Mon site";
     const logo = cfg.logoPath || "/assets/logo.svg";
@@ -47,21 +51,6 @@
     }
   }
 
-  function bindVideoError(videoEl) {
-    const media = videoEl.closest(".video-card__media");
-    if (!media) return;
-    videoEl.addEventListener("error", () => {
-      media.classList.add("is-broken");
-      if (!media.querySelector(".video-card__error")) {
-        const msg = document.createElement("p");
-        msg.className = "video-card__error";
-        msg.textContent =
-          "Vidéo illisible. Ré-uploade-la depuis l’admin (conversion MP4 automatique).";
-        media.appendChild(msg);
-      }
-    });
-  }
-
   function renderVideos(videos) {
     if (!els.videoList) return;
     els.videoList.innerHTML = "";
@@ -76,17 +65,27 @@
     for (const video of videos) {
       const article = document.createElement("article");
       article.className = "video-card";
-      article.innerHTML = `
-        <div class="video-card__media">
-          <video controls playsinline preload="metadata">
-            <source src="${video.url}" type="video/mp4" />
-          </video>
+
+      const link = document.createElement("a");
+      link.className = "video-card__link";
+      link.href = video.watchUrl || `/watch/${video.id}`;
+      link.setAttribute("aria-label", `Regarder ${video.title}`);
+
+      link.innerHTML = `
+        <div class="video-card__thumb">
+          <span class="video-card__play" aria-hidden="true"></span>
         </div>
         <h3 class="video-card__title"></h3>
       `;
-      article.querySelector(".video-card__title").textContent = video.title;
-      const videoEl = article.querySelector("video");
-      bindVideoError(videoEl);
+      link.querySelector(".video-card__title").textContent = video.title;
+
+      link.addEventListener("click", (event) => {
+        if (auth.isApproved()) return;
+        event.preventDefault();
+        auth.requireAccess();
+      });
+
+      article.appendChild(link);
       els.videoList.appendChild(article);
     }
   }
@@ -120,6 +119,7 @@
     } catch (_) {}
     els.gate.hidden = true;
     els.site.hidden = false;
+    auth.maybeAutoOpen();
   }
 
   function denyAccess() {
@@ -156,16 +156,20 @@
   });
   els.siteBrand?.addEventListener("click", reopenAgeMessage);
 
-  loadPublicData().catch(() => {
-    applyBrand({ brandName: "Maria", logoPath: "/assets/logo.svg", tagline: "" });
+  Promise.all([
+    loadPublicData().catch(() => {
+      applyBrand({ brandName: "Maria", logoPath: "/assets/logo.svg", tagline: "" });
+    }),
+    auth.refreshMember(),
+  ]).then(() => {
+    if (isVerified()) {
+      els.gate.hidden = true;
+      els.site.hidden = false;
+      auth.maybeAutoOpen();
+    } else if (wasDenied()) {
+      showGate("denied");
+    } else {
+      showGate("prompt");
+    }
   });
-
-  if (isVerified()) {
-    els.gate.hidden = true;
-    els.site.hidden = false;
-  } else if (wasDenied()) {
-    showGate("denied");
-  } else {
-    showGate("prompt");
-  }
 })();

@@ -3,50 +3,23 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Maria</title>
+    <title>Vidéo — Maria</title>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
       href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=Source+Serif+4:opsz,ital,wght@8..60,0,400;8..60,0,500;8..60,1,400&display=swap"
       rel="stylesheet"
     />
-    <link rel="stylesheet" href="styles.css" />
+    <link rel="stylesheet" href="/styles.css" />
   </head>
   <body>
-    <div id="age-gate" class="age-gate" role="dialog" aria-modal="true" aria-labelledby="age-title">
-      <div class="age-gate__panel">
-        <button type="button" class="age-gate__brand" id="age-brand-trigger" aria-label="Voir le message d’âge">
-          <img id="age-logo" class="age-gate__logo" src="assets/logo.svg" alt="" />
-          <span id="age-brand-name" class="age-gate__name">Maria</span>
-        </button>
-
-        <div id="age-prompt" class="age-gate__content">
-          <h1 id="age-title" class="age-gate__title">Vérification d’âge</h1>
-          <p id="age-message" class="age-gate__text">
-            Ce site est réservé aux personnes de 18 ans et plus. En continuant, tu confirmes avoir l’âge légal requis.
-          </p>
-          <div class="age-gate__actions">
-            <button type="button" id="btn-confirm" class="btn btn--confirm">J’ai 18 ans</button>
-            <button type="button" id="btn-deny" class="btn btn--deny">Je n’ai pas 18 ans</button>
-          </div>
-        </div>
-
-        <div id="age-denied" class="age-gate__content age-gate__content--denied" hidden>
-          <h1 id="denied-title" class="age-gate__title">Accès refusé</h1>
-          <p id="denied-message" class="age-gate__text">
-            Désolé — tu ne peux pas entrer sur ce site si tu as moins de 18 ans.
-          </p>
-        </div>
-      </div>
-    </div>
-
     <div id="auth-modal" class="auth-modal" hidden>
       <div class="auth-modal__panel" role="dialog" aria-modal="true" aria-labelledby="auth-title">
         <button type="button" id="auth-close" class="auth-modal__close" aria-label="Fermer">×</button>
 
         <div id="auth-choice" class="auth-modal__section">
-          <h2 id="auth-title" class="auth-modal__title">Bienvenue</h2>
-          <p class="auth-modal__text">Connecte-toi ou crée un compte pour regarder les vidéos.</p>
+          <h2 id="auth-title" class="auth-modal__title">Connexion requise</h2>
+          <p class="auth-modal__text">Connecte-toi ou crée un compte pour regarder cette vidéo.</p>
           <div class="auth-modal__actions">
             <button type="button" id="auth-goto-login" class="btn btn--confirm">Se connecter</button>
             <button type="button" id="auth-goto-register" class="btn btn--deny">Créer un compte</button>
@@ -123,12 +96,12 @@
       </div>
     </div>
 
-    <div id="site" class="site" hidden>
+    <div id="site" class="site site--watch">
       <header class="top">
-        <button type="button" class="brand" id="site-brand" aria-label="Marque">
-          <img id="site-logo" class="brand__logo" src="assets/logo.svg" alt="" />
+        <a class="brand" href="/" aria-label="Retour à l’accueil">
+          <img id="site-logo" class="brand__logo" src="/assets/logo.svg" alt="" />
           <span id="site-brand-name" class="brand__name">Maria</span>
-        </button>
+        </a>
         <div class="top__actions">
           <span id="member-badge" class="member-badge" hidden></span>
           <button type="button" id="auth-open" class="btn btn--ghost-sm">Connexion</button>
@@ -136,28 +109,20 @@
         </div>
       </header>
 
-      <main>
-        <section class="hero">
-          <div class="hero__copy">
-            <p id="hero-brand" class="hero__brand">Maria</p>
-            <h1 class="hero__headline">L’expérience commence ici</h1>
-            <p id="hero-tagline" class="hero__tagline"></p>
+      <main class="watch">
+        <a class="watch__back" href="/">← Retour aux vidéos</a>
+        <div id="watch-player-wrap" class="watch__player-wrap">
+          <video id="watch-player" class="watch__player" controls playsinline preload="metadata" hidden></video>
+          <div id="watch-locked" class="watch__locked">
+            <p id="watch-locked-text">Connecte-toi pour regarder cette vidéo.</p>
+            <button type="button" id="watch-unlock-btn" class="btn btn--confirm">Se connecter / Créer un compte</button>
           </div>
-          <div class="hero__visual" aria-hidden="true"></div>
-        </section>
-
-        <section class="gallery" aria-labelledby="gallery-title">
-          <div class="gallery__head">
-            <h2 id="gallery-title" class="gallery__title">Vidéos</h2>
-            <p id="gallery-description" class="gallery__subtitle">Regarde les dernières publications</p>
-          </div>
-          <div id="video-list" class="video-list"></div>
-          <p id="video-empty" class="video-empty" hidden>Aucune vidéo pour le moment.</p>
-        </section>
+        </div>
+        <h1 id="watch-title" class="watch__title">Chargement…</h1>
       </main>
     </div>
 
-    <script src="auth.js"></script>
-    <script src="app.js"></script>
+    <script src="/auth.js"></script>
+    <script src="/watch.js"></script>
   </body>
 </html>

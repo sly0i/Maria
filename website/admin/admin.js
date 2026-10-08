@@ -16,6 +16,16 @@
   const videoStatus = document.getElementById("video-status");
   const videoList = document.getElementById("admin-video-list");
   const videoEmpty = document.getElementById("admin-video-empty");
+  const membersList = document.getElementById("members-list");
+  const membersEmpty = document.getElementById("members-empty");
+  const codesList = document.getElementById("codes-list");
+  const codesEmpty = document.getElementById("codes-empty");
+  const tabButtons = document.querySelectorAll(".tabs__btn");
+  const tabPanels = {
+    content: document.getElementById("tab-content"),
+    members: document.getElementById("tab-members"),
+    codes: document.getElementById("tab-codes"),
+  };
 
   function setStatus(el, message, ok) {
     if (!el) return;
@@ -40,6 +50,25 @@
   function showAdmin(authenticated) {
     loginView.hidden = authenticated;
     adminView.hidden = !authenticated;
+  }
+
+  function switchTab(name) {
+    for (const [key, panel] of Object.entries(tabPanels)) {
+      if (panel) panel.hidden = key !== name;
+    }
+    tabButtons.forEach((btn) => {
+      btn.classList.toggle("is-active", btn.dataset.tab === name);
+    });
+    if (name === "members") loadMembers().catch((err) => alert(err.message));
+    if (name === "codes") loadCodes().catch((err) => alert(err.message));
+  }
+
+  function statusLabel(status) {
+    if (status === "pending") return "En attente";
+    if (status === "awaiting_code") return "Code non saisi";
+    if (status === "approved") return "Validé";
+    if (status === "rejected") return "Refusé";
+    return status;
   }
 
   async function loadConfig() {
@@ -68,7 +97,7 @@
       row.className = "admin-video";
       row.innerHTML = `
         <video controls playsinline preload="metadata">
-          <source src="${video.url}" type="video/mp4" />
+          <source src="/api/videos/${video.id}/stream" type="video/mp4" />
         </video>
         <div class="admin-video__meta">
           <h3 class="admin-video__title"></h3>
@@ -89,11 +118,119 @@
     }
   }
 
+  async function loadMembers() {
+    const data = await api("/api/admin/members");
+    const pending = (data.members || []).filter(
+      (m) => m.status === "pending" || m.status === "rejected"
+    );
+    membersList.innerHTML = "";
+
+    if (!pending.length) {
+      membersEmpty.hidden = false;
+      return;
+    }
+
+    membersEmpty.hidden = true;
+
+    for (const member of pending) {
+      const row = document.createElement("article");
+      row.className = "member-card";
+      row.innerHTML = `
+        <div class="member-card__info">
+          <strong class="member-card__email"></strong>
+          <span class="member-card__phone"></span>
+          <span class="member-card__status"></span>
+        </div>
+        <div class="member-card__actions">
+          <button type="button" class="btn btn--primary" data-action="approve">Valider</button>
+          <button type="button" class="btn btn--danger" data-action="reject">Refuser</button>
+        </div>
+      `;
+      row.querySelector(".member-card__email").textContent = member.email;
+      row.querySelector(".member-card__phone").textContent = member.phone;
+      row.querySelector(".member-card__status").textContent = statusLabel(member.status);
+
+      const approveBtn = row.querySelector('[data-action="approve"]');
+      const rejectBtn = row.querySelector('[data-action="reject"]');
+
+      if (member.status === "rejected") {
+        rejectBtn.hidden = true;
+      }
+
+      approveBtn.addEventListener("click", async () => {
+        try {
+          await api(`/api/admin/members/${member.id}/approve`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: "{}",
+          });
+          await loadMembers();
+          await loadCodes();
+        } catch (err) {
+          alert(err.message);
+        }
+      });
+
+      rejectBtn.addEventListener("click", async () => {
+        if (!confirm(`Refuser ${member.email} ?`)) return;
+        try {
+          await api(`/api/admin/members/${member.id}/reject`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: "{}",
+          });
+          await loadMembers();
+          await loadCodes();
+        } catch (err) {
+          alert(err.message);
+        }
+      });
+
+      membersList.appendChild(row);
+    }
+  }
+
+  async function loadCodes() {
+    const data = await api("/api/admin/codes");
+    const codes = data.codes || [];
+    codesList.innerHTML = "";
+
+    if (!codes.length) {
+      codesEmpty.hidden = false;
+      return;
+    }
+
+    codesEmpty.hidden = true;
+
+    for (const entry of codes) {
+      const row = document.createElement("article");
+      row.className = "code-card";
+      row.innerHTML = `
+        <div class="code-card__phone"></div>
+        <div class="code-card__code"></div>
+        <div class="code-card__meta">
+          <span class="code-card__email"></span>
+          <span class="code-card__status"></span>
+        </div>
+      `;
+      row.querySelector(".code-card__phone").textContent = entry.phone;
+      row.querySelector(".code-card__code").textContent = entry.code;
+      row.querySelector(".code-card__email").textContent = entry.email;
+      row.querySelector(".code-card__status").textContent = statusLabel(entry.status);
+      codesList.appendChild(row);
+    }
+  }
+
   async function bootAdmin() {
     await loadConfig();
     await loadVideos();
     showAdmin(true);
+    switchTab("content");
   }
+
+  tabButtons.forEach((btn) => {
+    btn.addEventListener("click", () => switchTab(btn.dataset.tab));
+  });
 
   loginForm.addEventListener("submit", async (event) => {
     event.preventDefault();

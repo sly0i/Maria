@@ -228,3 +228,98 @@ input[type="file"] {
   font-family: var(--font-display);
   font-weight: 600;
 }
+
+.tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-bottom: 1.25rem;
+}
+
+.tabs__btn {
+  appearance: none;
+  border: 1px solid var(--line);
+  background: transparent;
+  color: var(--mist);
+  padding: 0.7rem 1rem;
+  font-family: var(--font-display);
+  font-size: 0.85rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  cursor: pointer;
+}
+
+.tabs__btn.is-active,
+.tabs__btn:hover,
+.tabs__btn:focus-visible {
+  border-color: rgba(196, 165, 116, 0.55);
+  color: var(--brass);
+  outline: none;
+}
+
+.tab-panel[hidden] {
+  display: none;
+}
+
+.member-list,
+.code-list {
+  display: grid;
+  gap: 0.9rem;
+}
+
+.member-card,
+.code-card {
+  display: grid;
+  gap: 0.85rem;
+  padding: 1rem 0;
+  border-bottom: 1px solid var(--line);
+}
+
+.member-card:last-child,
+.code-card:last-child {
+  border-bottom: 0;
+  padding-bottom: 0;
+}
+
+.member-card__info,
+.code-card__meta {
+  display: grid;
+  gap: 0.25rem;
+}
+
+.member-card__email,
+.code-card__phone {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 1.05rem;
+}
+
+.member-card__phone,
+.member-card__status,
+.code-card__email,
+.code-card__status {
+  color: var(--mist);
+  font-size: 0.95rem;
+}
+
+.code-card__code {
+  font-family: var(--font-display);
+  font-size: 2rem;
+  font-weight: 700;
+  letter-spacing: 0.2em;
+  color: var(--brass);
+}
+
+.member-card__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+@media (min-width: 640px) {
+  .member-card {
+    grid-template-columns: 1fr auto;
+    align-items: center;
+  }
+}

@@ -251,21 +251,15 @@ body::before {
 .hero {
   display: grid;
   align-items: end;
-  min-height: min(78vh, 720px);
-  padding: 0 clamp(1.25rem, 4vw, 3rem) clamp(2.5rem, 8vh, 4.5rem);
+  min-height: min(52vh, 420px);
+  padding: 0 clamp(1.25rem, 4vw, 3rem) clamp(2rem, 6vh, 3rem);
   position: relative;
-  overflow: hidden;
-}
-
-.hero__ads {
-  position: absolute;
-  inset: 0;
-  z-index: 0;
 }
 
 .hero__visual {
   position: absolute;
   inset: 0;
+  z-index: -1;
   background:
     linear-gradient(180deg, transparent 20%, rgba(8, 12, 10, 0.75) 75%, var(--ink) 100%),
     radial-gradient(ellipse 70% 55% at 75% 35%, rgba(196, 165, 116, 0.22), transparent 60%),
@@ -273,77 +267,64 @@ body::before {
   animation: pulse-glow 8s ease-in-out infinite alternate;
 }
 
-.hero__ads.has-ads::after {
-  content: "";
-  position: absolute;
-  inset: 0;
-  z-index: 1;
-  pointer-events: none;
-  background: linear-gradient(180deg, rgba(8, 12, 10, 0.25) 10%, rgba(8, 12, 10, 0.55) 55%, rgba(8, 12, 10, 0.92) 100%);
+.hero__copy {
+  max-width: 36rem;
+  animation: rise-in 0.85s cubic-bezier(0.22, 1, 0.36, 1) 0.1s both;
 }
 
-.hero-ads__track {
-  position: absolute;
-  inset: 0;
+.ads-section {
+  padding: 0 clamp(1.25rem, 4vw, 3rem) clamp(2rem, 5vh, 3rem);
 }
 
-.hero-ads__slide {
-  position: absolute;
-  inset: 0;
+.ads-section[hidden] {
+  display: none !important;
+}
+
+.ads-section__head {
+  margin-bottom: 1rem;
+}
+
+.ads-section__title {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: clamp(1.35rem, 3.5vw, 1.75rem);
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+
+.ads-list {
+  display: grid;
+  gap: 1rem;
+}
+
+.ad-card {
   display: block;
-  opacity: 0;
-  pointer-events: none;
-  transition: opacity 0.7s ease;
-  cursor: pointer;
+  border: 1px solid var(--line);
+  overflow: hidden;
+  text-decoration: none;
+  background: rgba(0, 0, 0, 0.28);
+  transition: border-color 0.2s ease, transform 0.2s ease;
 }
 
-.hero-ads__slide.is-active {
-  opacity: 1;
-  pointer-events: auto;
-  z-index: 1;
+.ad-card:hover,
+.ad-card:focus-visible {
+  border-color: rgba(196, 165, 116, 0.55);
+  transform: translateY(-2px);
+  outline: none;
 }
 
-.hero-ads__slide img,
-.hero-ads__slide video {
+.ad-card__media {
+  display: block;
   width: 100%;
-  height: 100%;
+  aspect-ratio: 16 / 9;
   object-fit: cover;
-  display: block;
   background: #000;
 }
 
-.hero-ads__dots {
-  position: absolute;
-  left: 50%;
-  bottom: 1rem;
-  transform: translateX(-50%);
-  z-index: 2;
-  display: flex;
-  gap: 0.45rem;
-}
-
-.hero-ads__dot {
-  width: 0.55rem;
-  height: 0.55rem;
-  border-radius: 999px;
-  border: 1px solid rgba(216, 224, 214, 0.45);
-  background: transparent;
-  padding: 0;
-  cursor: pointer;
-}
-
-.hero-ads__dot.is-active {
-  background: var(--brass);
-  border-color: var(--brass);
-}
-
-.hero__copy {
-  position: relative;
-  z-index: 2;
-  max-width: 36rem;
-  pointer-events: none;
-  text-shadow: 0 2px 18px rgba(0, 0, 0, 0.55);
-  animation: rise-in 0.85s cubic-bezier(0.22, 1, 0.36, 1) 0.1s both;
+@media (min-width: 720px) {
+  .ads-list {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
 }
 
 .hero__brand {

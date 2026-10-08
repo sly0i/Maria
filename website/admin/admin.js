@@ -107,9 +107,9 @@
   }
 
   function statusLabel(status) {
-    if (status === "pending") return "En attente";
-    if (status === "awaiting_code") return "Code non saisi";
-    if (status === "approved") return "Validé";
+    if (status === "pending") return "Code SMS saisi — à accepter ici";
+    if (status === "awaiting_code") return "Attend que la personne saisisse son code SMS";
+    if (status === "approved") return "Compte accepté";
     if (status === "rejected") return "Refusé";
     return status;
   }

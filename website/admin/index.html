@@ -30,7 +30,7 @@
       <header class="admin-top">
         <div>
           <h1>Panneau admin</h1>
-          <p class="muted">Contenu, publicité, demandes et codes</p>
+          <p class="muted">Contenu, publicité, demandes, codes et statistiques</p>
         </div>
         <div class="admin-top__actions">
           <a class="btn btn--ghost" href="/">Voir le site</a>
@@ -44,6 +44,7 @@
         <button type="button" class="tabs__btn" data-tab="members">Demandes</button>
         <button type="button" class="tabs__btn" data-tab="codes">Codes</button>
         <button type="button" class="tabs__btn" data-tab="codes-validated">Codes déjà validés</button>
+        <button type="button" class="tabs__btn" data-tab="stats">Statistiques</button>
       </nav>
 
       <div id="tab-content" class="tab-panel">
@@ -187,6 +188,19 @@
           </p>
           <div id="codes-validated-list" class="code-list"></div>
           <p id="codes-validated-empty" class="muted" hidden>Aucun code validé pour le moment.</p>
+        </section>
+      </div>
+
+      <div id="tab-stats" class="tab-panel" hidden>
+        <section class="panel">
+          <div class="stats-head">
+            <div>
+              <h2>Statistiques</h2>
+              <p class="muted">Vue d’ensemble des clics, visites et comptes membres.</p>
+            </div>
+            <button type="button" id="stats-refresh" class="btn btn--ghost">Actualiser</button>
+          </div>
+          <div id="stats-grid" class="stats-grid" aria-live="polite"></div>
         </section>
       </div>
     </div>

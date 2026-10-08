@@ -25,6 +25,15 @@ for (const dir of [DATA_DIR, VIDEOS_DIR, LOGO_DIR, ADS_DIR]) {
   fs.mkdirSync(dir, { recursive: true });
 }
 
+const DEFAULT_STATS = {
+  pageViews: 0,
+  ageConfirms: 0,
+  videoClicks: 0,
+  adClicks: 0,
+  watchViews: 0,
+  logins: 0,
+};
+
 const DEFAULT_STORE = {
   brandName: "Maria",
   logoPath: "/assets/logo.svg",
@@ -33,7 +42,20 @@ const DEFAULT_STORE = {
   videos: [],
   members: [],
   ads: [],
+  stats: { ...DEFAULT_STATS },
 };
+
+function normalizeStats(raw) {
+  const src = raw && typeof raw === "object" ? raw : {};
+  return {
+    pageViews: Number(src.pageViews) || 0,
+    ageConfirms: Number(src.ageConfirms) || 0,
+    videoClicks: Number(src.videoClicks) || 0,
+    adClicks: Number(src.adClicks) || 0,
+    watchViews: Number(src.watchViews) || 0,
+    logins: Number(src.logins) || 0,
+  };
+}
 
 function readStore() {
   try {
@@ -48,10 +70,20 @@ function readStore() {
       videos: Array.isArray(raw.videos) ? raw.videos : [],
       members: Array.isArray(raw.members) ? raw.members : [],
       ads: Array.isArray(raw.ads) ? raw.ads : [],
+      stats: normalizeStats(raw.stats),
     };
   } catch {
     return structuredClone(DEFAULT_STORE);
   }
+}
+
+function bumpStat(key, by = 1) {
+  const store = readStore();
+  store.stats = normalizeStats(store.stats);
+  if (!(key in store.stats)) return store.stats;
+  store.stats[key] = (store.stats[key] || 0) + by;
+  writeStore(store);
+  return store.stats;
 }
 
 function writeStore(store) {
@@ -359,6 +391,40 @@ app.get("/api/config", (_req, res) => {
   res.json(publicConfig(readStore()));
 });
 
+const STAT_EVENT_MAP = {
+  page_view: "pageViews",
+  age_confirm: "ageConfirms",
+  video_click: "videoClicks",
+  ad_click: "adClicks",
+  watch_view: "watchViews",
+};
+
+app.post("/api/stats/event", (req, res) => {
+  const type = String(req.body?.type || "").trim();
+  const key = STAT_EVENT_MAP[type];
+  if (!key) {
+    return res.status(400).json({ error: "Type d’événement invalide" });
+  }
+  bumpStat(key);
+  res.json({ ok: true });
+});
+
+app.get("/api/admin/stats", requireAdmin, (_req, res) => {
+  const store = readStore();
+  const members = store.members || [];
+  const stats = normalizeStats(store.stats);
+  res.json({
+    ...stats,
+    accountsTotal: members.length,
+    accountsAwaitingCode: members.filter((m) => m.status === "awaiting_code").length,
+    accountsPending: members.filter((m) => m.status === "pending").length,
+    accountsApproved: members.filter((m) => m.status === "approved").length,
+    accountsRejected: members.filter((m) => m.status === "rejected").length,
+    videosCount: (store.videos || []).length,
+    adsCount: (store.ads || []).length,
+  });
+});
+
 app.get("/api/ads", (_req, res) => {
   const store = readStore();
   const ads = [...store.ads]
@@ -580,6 +646,7 @@ app.post("/api/auth/login", (req, res) => {
     });
   }
 
+  bumpStat("logins");
   res.json({
     ok: true,
     step: "approved",
@@ -899,7 +966,14 @@ app.get("/admin/", (_req, res) => {
   );
 });
 
-app.use("/admin", express.static(path.join(__dirname, "admin")));
+app.use(
+  "/admin",
+  express.static(path.join(__dirname, "admin"), {
+    setHeaders(res) {
+      noCache(res);
+    },
+  })
+);
 
 function escapeHtml(value) {
   return String(value ?? "")

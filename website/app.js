@@ -57,6 +57,23 @@
   let allVideos = [];
   let activeFilter = "all";
 
+  function trackStat(type) {
+    try {
+      const body = JSON.stringify({ type });
+      if (navigator.sendBeacon) {
+        const blob = new Blob([body], { type: "application/json" });
+        navigator.sendBeacon("/api/stats/event", blob);
+        return;
+      }
+      fetch("/api/stats/event", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body,
+        keepalive: true,
+      }).catch(() => {});
+    } catch (_) {}
+  }
+
   function isNewVideo(video) {
     const created = Number(video.createdAt) || 0;
     return created > 0 && Date.now() - created < NEW_WINDOW_MS;
@@ -107,6 +124,7 @@
       link.querySelector(".video-card__time").textContent = `${mins}:${secs}`;
 
       link.addEventListener("click", (event) => {
+        trackStat("video_click");
         if (auth.isApproved()) return;
         event.preventDefault();
         auth.requireAccess();
@@ -152,6 +170,7 @@
         link.innerHTML = `<img class="ad-card__media" src="${ad.url}" alt="" />`;
       }
 
+      link.addEventListener("click", () => trackStat("ad_click"));
       els.adsList.appendChild(link);
     }
   }
@@ -169,7 +188,8 @@
 
     if (videosRes.ok) {
       const data = await videosRes.json();
-      renderVideos(data.videos || []);
+      allVideos = data.videos || [];
+      setFilter(activeFilter);
     }
 
     if (adsRes.ok) {
@@ -193,6 +213,8 @@
     } catch (_) {}
     els.gate.hidden = true;
     els.site.hidden = false;
+    trackStat("age_confirm");
+    trackStat("page_view");
     auth.maybeAutoOpen();
   }
 
@@ -232,15 +254,7 @@
 
   document.querySelectorAll(".cat-bar__item").forEach((btn) => {
     btn.addEventListener("click", () => {
-      document.querySelectorAll(".cat-bar__item").forEach((b) => b.classList.remove("is-active"));
-      btn.classList.add("is-active");
-    });
-  });
-
-  document.querySelectorAll(".gallery__tab").forEach((btn) => {
-    btn.addEventListener("click", () => {
-      document.querySelectorAll(".gallery__tab").forEach((b) => b.classList.remove("is-active"));
-      btn.classList.add("is-active");
+      setFilter(btn.dataset.filter || "all");
     });
   });
 
@@ -262,6 +276,7 @@
     if (isVerified()) {
       els.gate.hidden = true;
       els.site.hidden = false;
+      trackStat("page_view");
       auth.maybeAutoOpen();
     } else if (wasDenied()) {
       showGate("denied");

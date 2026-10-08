@@ -62,6 +62,23 @@
     }
   }
 
+  function trackStat(type) {
+    try {
+      const body = JSON.stringify({ type });
+      if (navigator.sendBeacon) {
+        const blob = new Blob([body], { type: "application/json" });
+        navigator.sendBeacon("/api/stats/event", blob);
+        return;
+      }
+      fetch("/api/stats/event", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body,
+        keepalive: true,
+      }).catch(() => {});
+    } catch (_) {}
+  }
+
   function loadPlayer() {
     if (!auth.isApproved() || !els.player) {
       showLocked(auth.getMember());
@@ -70,6 +87,7 @@
     els.locked.hidden = true;
     els.player.hidden = false;
     els.player.src = `/api/videos/${encodeURIComponent(videoId)}/stream`;
+    trackStat("watch_view");
   }
 
   async function loadVideoMeta() {

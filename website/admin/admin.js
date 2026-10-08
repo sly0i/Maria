@@ -26,6 +26,8 @@
   const adStatus = document.getElementById("ad-status");
   const adsList = document.getElementById("admin-ads-list");
   const adsEmpty = document.getElementById("admin-ads-empty");
+  const statsGrid = document.getElementById("stats-grid");
+  const statsRefresh = document.getElementById("stats-refresh");
   const tabButtons = document.querySelectorAll(".tabs__btn");
   const tabPanels = {
     content: document.getElementById("tab-content"),
@@ -33,6 +35,7 @@
     members: document.getElementById("tab-members"),
     codes: document.getElementById("tab-codes"),
     "codes-validated": document.getElementById("tab-codes-validated"),
+    stats: document.getElementById("tab-stats"),
   };
 
   function setStatus(el, message, ok) {
@@ -71,6 +74,36 @@
     if (name === "members") loadMembers().catch((err) => alert(err.message));
     if (name === "codes") loadCodes().catch((err) => alert(err.message));
     if (name === "codes-validated") loadValidatedCodes().catch((err) => alert(err.message));
+    if (name === "stats") loadStats().catch((err) => alert(err.message));
+  }
+
+  async function loadStats() {
+    if (!statsGrid) return;
+    const data = await api("/api/admin/stats");
+    const cards = [
+      { label: "Visites page d’accueil", value: data.pageViews },
+      { label: "Confirmations 18+", value: data.ageConfirms },
+      { label: "Clics sur vidéos", value: data.videoClicks },
+      { label: "Lectures vidéo", value: data.watchViews },
+      { label: "Clics publicités", value: data.adClicks },
+      { label: "Connexions membres", value: data.logins },
+      { label: "Comptes créés", value: data.accountsTotal },
+      { label: "Comptes validés", value: data.accountsApproved },
+      { label: "Demandes en attente", value: data.accountsPending },
+      { label: "Codes non saisis", value: data.accountsAwaitingCode },
+      { label: "Comptes refusés", value: data.accountsRejected },
+      { label: "Vidéos publiées", value: data.videosCount },
+      { label: "Publicités actives", value: data.adsCount },
+    ];
+    statsGrid.innerHTML = cards
+      .map(
+        (card) => `
+      <article class="stat-card">
+        <p class="stat-card__value">${Number(card.value) || 0}</p>
+        <p class="stat-card__label">${card.label}</p>
+      </article>`
+      )
+      .join("");
   }
 
   function statusLabel(status) {
@@ -308,6 +341,10 @@
 
   tabButtons.forEach((btn) => {
     btn.addEventListener("click", () => switchTab(btn.dataset.tab));
+  });
+
+  statsRefresh?.addEventListener("click", () => {
+    loadStats().catch((err) => alert(err.message));
   });
 
   loginForm.addEventListener("submit", async (event) => {

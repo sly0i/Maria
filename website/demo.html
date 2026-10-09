@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="fr">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Démo esthétique — EroticX</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;600;700&family=Syne:wght@700;800&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="/demo.css" />
+  </head>
+  <body>
+    <div class="demo-banner">
+      <span
+        ><strong>Démo esthétique</strong> — aperçu seulement. L’ancien site reste intact.</span
+      >
+      <a href="/">Retour à l’ancien site</a>
+    </div>
+
+    <div id="gate" class="gate" role="dialog" aria-modal="true" aria-labelledby="gate-title">
+      <div class="gate__card">
+        <img id="gate-logo" class="gate__logo" src="/assets/logo.svg" alt="" />
+        <p id="gate-brand" class="gate__brand">EroticX</p>
+        <h1 id="gate-title" class="gate__title">Entrée réservée 18+</h1>
+        <p class="gate__text">
+          Contenu adulte. En entrant, tu confirmes avoir l’âge légal et tu acceptes de voir du contenu
+          explicite.
+        </p>
+        <div class="gate__actions">
+          <button type="button" id="gate-enter" class="btn btn--hot">J’ai 18 ans — Entrer</button>
+          <button type="button" id="gate-leave" class="btn btn--ghost">J’ai moins de 18 ans</button>
+        </div>
+      </div>
+    </div>
+
+    <div id="shell" class="shell" hidden>
+      <header class="top">
+        <button type="button" class="brand" id="top-brand">
+          <img id="top-logo" class="brand__mark" src="/assets/logo.svg" alt="" />
+          <span id="top-name" class="brand__name">EroticX</span>
+        </button>
+        <div class="top__actions">
+          <button type="button" class="btn btn--ghost btn--sm">Connexion</button>
+          <button type="button" class="btn btn--hot btn--sm">Créer un compte</button>
+        </div>
+      </header>
+
+      <section class="hero" aria-label="Accueil">
+        <div class="hero__visual" aria-hidden="true"></div>
+        <div class="hero__veil" aria-hidden="true"></div>
+        <p id="hero-brand" class="hero__brand">EroticX</p>
+        <p id="hero-line" class="hero__line">Regarde les dernières publications</p>
+        <div class="hero__cta">
+          <a class="btn btn--hot" href="#videos">Voir les vidéos</a>
+          <a class="btn btn--ghost" href="#pubs">Sponsors</a>
+        </div>
+      </section>
+
+      <main class="page">
+        <section id="pubs" aria-label="Publicité">
+          <div class="section-head">
+            <div>
+              <h2>À la une</h2>
+              <p>Espace publicité — carrousel premium</p>
+            </div>
+          </div>
+          <div class="ad-wrap">
+            <div id="ad-stage" class="ad-stage" hidden></div>
+            <div id="ad-dots" class="ad-dots" hidden></div>
+          </div>
+          <p id="ad-empty" class="ad-empty">Ajoute des pubs depuis l’admin pour les voir ici.</p>
+        </section>
+
+        <section id="videos" aria-label="Vidéos">
+          <div class="section-head">
+            <div>
+              <h2>Catalogue</h2>
+              <p>Grille moderne, focus sur les miniatures</p>
+            </div>
+            <div class="chip-row" role="tablist" aria-label="Filtres">
+              <button type="button" class="chip is-active">Tout</button>
+              <button type="button" class="chip">Nouveau</button>
+              <button type="button" class="chip">Tendance</button>
+            </div>
+          </div>
+          <div id="video-grid" class="video-grid"></div>
+          <p id="video-empty" class="video-empty" hidden>Aucune vidéo pour le moment.</p>
+        </section>
+
+        <footer class="foot">
+          <span>Démo visuelle uniquement — auth & admin inchangés sur le site actuel.</span>
+          <a href="/">← Revenir à l’ancien rendu</a>
+        </footer>
+      </main>
+    </div>
+
+    <script src="/demo.js"></script>
+  </body>
+</html>

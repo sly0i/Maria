@@ -1221,6 +1221,22 @@ app.get("/styles.css", (_req, res) => {
   res.sendFile(path.join(__dirname, "styles.css"));
 });
 
+app.get("/demo.css", (_req, res) => {
+  res.type("text/css");
+  noCache(res);
+  res.sendFile(path.join(__dirname, "demo.css"));
+});
+
+app.get("/demo.js", (_req, res) => {
+  res.type("application/javascript");
+  noCache(res);
+  res.sendFile(path.join(__dirname, "demo.js"));
+});
+
+app.get("/demo", (_req, res) => {
+  sendHtmlWithInlineCss(res, path.join(__dirname, "demo.html"), path.join(__dirname, "demo.css"));
+});
+
 app.get("/watch/:id", (_req, res) => {
   sendHtmlWithInlineCss(res, path.join(__dirname, "watch.html"));
 });

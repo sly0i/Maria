@@ -64,12 +64,13 @@
     });
 
     if (els.heroTagline) {
-      els.heroTagline.textContent = cfg.tagline || "Regarde sans limite.";
+      // Short punchy headline (tagline config is often the age notice — keep it out of the hero H1)
+      els.heroTagline.textContent = "Regarde sans limite.";
     }
 
     if (els.siteDescription) {
       els.siteDescription.textContent =
-        cfg.description || "Regarde les dernières publications";
+        cfg.description || cfg.tagline || "Regarde les dernières publications";
     }
   }
 

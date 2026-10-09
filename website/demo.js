@@ -8,9 +8,6 @@
     gateBrand: document.getElementById("gate-brand"),
     navLogo: document.getElementById("nav-logo"),
     navName: document.getElementById("nav-name"),
-    mobileLogo: document.getElementById("mobile-logo"),
-    mobileName: document.getElementById("mobile-name"),
-    railDesc: document.getElementById("rail-desc"),
     heroBrand: document.getElementById("hero-brand"),
     heroLine: document.getElementById("hero-line"),
     grid: document.getElementById("grid"),
@@ -27,13 +24,12 @@
     const name = cfg.brandName || "EroticX";
     const logo = `${cfg.logoPath || "/assets/logo.svg"}?t=${Date.now()}`;
     const desc = cfg.description || "Une vitrine adulte plus éditoriale, plus désir.";
-    document.title = `DA Nightlife — ${name}`;
-    [els.gateBrand, els.navName, els.mobileName, els.heroBrand].forEach((n) => {
+    document.title = `DA Luxe — ${name}`;
+    [els.gateBrand, els.navName, els.heroBrand].forEach((n) => {
       if (n) n.textContent = name;
     });
     if (els.heroLine) els.heroLine.textContent = desc;
-    if (els.railDesc) els.railDesc.textContent = desc;
-    [els.gateLogo, els.navLogo, els.mobileLogo].forEach((img) => {
+    [els.gateLogo, els.navLogo].forEach((img) => {
       if (!img) return;
       img.src = logo;
       img.alt = name;
@@ -47,34 +43,35 @@
 
   function viewsLabel(seed) {
     const n = Number(seed) || 0;
-    const v = 1200 + (n % 8800);
-    if (v >= 1000) return `${(v / 1000).toFixed(1)}k vues`;
-    return `${v} vues`;
+    const v = 1400 + (n % 9200);
+    return `${(v / 1000).toFixed(1)}k`;
   }
 
-  function shot(title, seed, meta, badge, tone) {
+  function shot(title, seed, badge, tone) {
     const a = document.createElement("a");
     a.className = `shot shot--${tone || "a"}`;
     a.href = "#wall";
     a.innerHTML = `
       <div class="shot__frame">
-        <span class="shot__glow" aria-hidden="true"></span>
+        <span class="shot__art" aria-hidden="true"></span>
+        <span class="shot__mesh" aria-hidden="true"></span>
         <span class="shot__veil" aria-hidden="true"></span>
-        <span class="shot__shine" aria-hidden="true"></span>
         <span class="shot__play" aria-hidden="true"></span>
         <span class="shot__badge"></span>
         <span class="shot__hd">HD</span>
-        <span class="shot__time"></span>
-      </div>
-      <div class="shot__body">
-        <h4 class="shot__title"></h4>
-        <p class="shot__meta"><span class="shot__dot" aria-hidden="true"></span><span class="shot__metaText"></span></p>
+        <div class="shot__foot">
+          <h4 class="shot__title"></h4>
+          <p class="shot__meta">
+            <span class="shot__views"></span>
+            <span class="shot__time"></span>
+          </p>
+        </div>
       </div>
     `;
     a.querySelector(".shot__badge").textContent = badge;
-    a.querySelector(".shot__time").textContent = timeLabel(seed);
     a.querySelector(".shot__title").textContent = title;
-    a.querySelector(".shot__metaText").textContent = `${meta} · ${viewsLabel(seed)}`;
+    a.querySelector(".shot__views").textContent = `${viewsLabel(seed)} vues`;
+    a.querySelector(".shot__time").textContent = timeLabel(seed);
     a.addEventListener("click", (e) => e.preventDefault());
     return a;
   }
@@ -82,7 +79,7 @@
   function render(videos) {
     if (!els.grid) return;
     els.grid.innerHTML = "";
-
+    const tones = ["a", "b", "c"];
     const names = [
       "Rouge minuit",
       "Suite 18",
@@ -90,37 +87,27 @@
       "After hours",
       "Velours noir",
       "Private cut",
+      "Lueur chaude",
+      "Silent film",
     ];
 
-    const tones = ["a", "b", "c"];
+    if (els.empty) els.empty.hidden = true;
 
     if (!videos.length) {
       names.forEach((title, i) => {
-        els.grid.appendChild(
-          shot(title, i * 811, "Éditorial", i === 0 ? "Tonight" : "Cut", tones[i % 3])
-        );
+        els.grid.appendChild(shot(title, i * 811, i === 0 ? "Tonight" : "Cut", tones[i % 3]));
       });
-      if (els.empty) els.empty.hidden = true;
       return;
     }
 
-    if (els.empty) els.empty.hidden = true;
     videos.forEach((v, i) => {
       els.grid.appendChild(
-        shot(
-          v.title || "Sans titre",
-          v.createdAt || i,
-          "Membre",
-          i === 0 ? "Tonight" : "New",
-          tones[i % 3]
-        )
+        shot(v.title || "Sans titre", v.createdAt || i, i === 0 ? "Tonight" : "New", tones[i % 3])
       );
     });
 
-    for (let i = videos.length; i < 6; i += 1) {
-      els.grid.appendChild(
-        shot(names[i % names.length], i * 701, "Demo", "Cut", tones[i % 3])
-      );
+    for (let i = videos.length; i < 8; i += 1) {
+      els.grid.appendChild(shot(names[i % names.length], i * 701, "Cut", tones[i % 3]));
     }
   }
 
@@ -147,7 +134,6 @@
     }
 
     const frame = els.adStage.closest(".billboard__frame");
-
     if (!ads.length) {
       if (els.adEmpty) els.adEmpty.hidden = false;
       if (frame) frame.classList.add("is-empty");

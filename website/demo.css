@@ -253,29 +253,7 @@ a {
 
 .feature {
   position: relative;
-  min-height: min(68vh, 560px);
-  display: grid;
-  align-content: end;
-  padding: 2rem 1rem 1.6rem;
-  overflow: hidden;
-  isolation: isolate;
-}
-
-.feature__art {
-  position: absolute;
-  inset: 0;
-  z-index: -2;
-  background:
-    linear-gradient(120deg, rgba(255, 45, 106, 0.4), transparent 45%),
-    radial-gradient(circle at 70% 35%, rgba(255, 45, 106, 0.35), transparent 40%),
-    linear-gradient(180deg, #1a1016 0%, #0a0a0b 100%);
-}
-
-.feature__art::after {
-  content: "";
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(180deg, transparent 20%, rgba(10, 10, 11, 0.2) 55%, #0a0a0b 100%);
+  padding: 1.15rem 1rem 1.25rem;
 }
 
 .feature__eyebrow {
@@ -310,23 +288,28 @@ a {
 }
 
 .billboard {
-  padding: 0.25rem 1rem 1.4rem;
+  padding: 0.75rem 1rem 0.35rem;
 }
 
 .billboard__frame {
   position: relative;
-  border-radius: 22px;
+  border-radius: 18px;
   overflow: hidden;
   border: 1px solid var(--line);
   background: var(--bg-elev);
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.35);
+}
+
+.billboard__frame.is-empty {
+  display: none;
 }
 
 .billboard__stage {
   position: relative;
   width: 100%;
-  aspect-ratio: 16 / 7;
-  max-height: 240px;
-  min-height: 150px;
+  aspect-ratio: 16 / 6;
+  max-height: 200px;
+  min-height: 140px;
 }
 
 .billboard__slide {
@@ -582,7 +565,7 @@ a {
   }
 
   .feature {
-    padding: 2.5rem 1.5rem 2rem;
+    padding: 1.5rem 1.5rem 1.4rem;
   }
 
   .wall,
@@ -592,9 +575,13 @@ a {
     padding-right: 1.5rem;
   }
 
+  .billboard {
+    padding-top: 1rem;
+  }
+
   .billboard__stage {
     aspect-ratio: 16 / 5;
-    max-height: 260px;
+    max-height: 240px;
   }
 }
 

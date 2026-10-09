@@ -10,7 +10,8 @@
     gateBrand: document.getElementById("gate-brand"),
     navLogo: document.getElementById("nav-logo"),
     navName: document.getElementById("nav-name"),
-    siteDesc: document.getElementById("site-desc"),
+    heroBrand: document.getElementById("hero-brand"),
+    heroLine: document.getElementById("hero-line"),
     grid: document.getElementById("grid"),
     empty: document.getElementById("empty"),
   };
@@ -21,11 +22,12 @@
   function applyBrand(cfg) {
     const name = cfg.brandName || "EroticX";
     const logo = `${cfg.logoPath || "/assets/logo.svg"}?t=${Date.now()}`;
-    const desc = cfg.description || "Regarde les dernières publications";
-    document.title = `Démo — ${name}`;
-    if (els.gateBrand) els.gateBrand.textContent = name;
-    if (els.navName) els.navName.textContent = name;
-    if (els.siteDesc) els.siteDesc.textContent = desc;
+    const desc = cfg.description || "Une expérience adulte plus douce, plus moderne.";
+    document.title = `Démo DA — ${name}`;
+    [els.gateBrand, els.navName, els.heroBrand].forEach((n) => {
+      if (n) n.textContent = name;
+    });
+    if (els.heroLine) els.heroLine.textContent = desc;
     [els.gateLogo, els.navLogo].forEach((img) => {
       if (!img) return;
       img.src = logo;
@@ -38,35 +40,34 @@
     return t > 0 && Date.now() - t < NEW_MS;
   }
 
-  function filtered() {
+  function list() {
     if (filter === "new") return allVideos.filter(isNew);
     return allVideos;
   }
 
-  function durationLabel(seed) {
+  function timeLabel(seed) {
     const n = Number(seed) || 0;
-    const mins = String((n % 17) + 4).padStart(2, "0");
-    const secs = String((n % 50) + 10).padStart(2, "0");
-    return `${mins}:${secs}`;
+    return `${String((n % 17) + 4).padStart(2, "0")}:${String((n % 50) + 10).padStart(2, "0")}`;
   }
 
-  function makeCard(title, seed, meta) {
+  function card(title, seed, meta, tag) {
     const a = document.createElement("a");
-    a.className = "card";
-    a.href = "#";
-    a.setAttribute("aria-label", title);
+    a.className = "tile";
+    a.href = "#feed";
     a.innerHTML = `
-      <div class="card__thumb">
-        <span class="card__play" aria-hidden="true"></span>
-        <span class="card__hd">HD</span>
-        <span class="card__time"></span>
+      <div class="tile__media">
+        <span class="tile__tag"></span>
+        <span class="tile__time"></span>
       </div>
-      <h3 class="card__title"></h3>
-      <p class="card__meta"></p>
+      <div class="tile__body">
+        <h3 class="tile__title"></h3>
+        <p class="tile__meta"></p>
+      </div>
     `;
-    a.querySelector(".card__time").textContent = durationLabel(seed);
-    a.querySelector(".card__title").textContent = title;
-    a.querySelector(".card__meta").textContent = meta;
+    a.querySelector(".tile__tag").textContent = tag;
+    a.querySelector(".tile__time").textContent = timeLabel(seed);
+    a.querySelector(".tile__title").textContent = title;
+    a.querySelector(".tile__meta").textContent = meta;
     a.addEventListener("click", (e) => e.preventDefault());
     return a;
   }
@@ -74,86 +75,66 @@
   function render() {
     if (!els.grid) return;
     els.grid.innerHTML = "";
-    const videos = filtered();
+    const videos = list();
 
     if (!videos.length && filter === "new") {
       if (els.empty) {
         els.empty.hidden = false;
-        els.empty.textContent = "Aucune nouvelle vidéo (24 h).";
+        els.empty.textContent = "Pas de nouveauté sur 24 h.";
       }
       return;
     }
-
     if (els.empty) els.empty.hidden = true;
 
-    videos.forEach((video) => {
+    videos.forEach((v) => {
       els.grid.appendChild(
-        makeCard(video.title || "Vidéo", video.createdAt, filter === "new" ? "Nouveau" : "HD · 1080p")
+        card(v.title || "Sans titre", v.createdAt, "Contenu membre", isNew(v) ? "New" : "4K")
       );
     });
 
-    // Fill so the demo looks dense on every device
-    if (filter === "all" && videos.length < 10) {
+    if (filter !== "new" && videos.length < 7) {
       const names = [
-        "Night session",
-        "Private cut",
-        "After dark",
-        "Raw take",
-        "Close up",
-        "Hotel room",
-        "Weekend",
-        "Soft light",
-        "First time",
-        "Late call",
+        "Lueur d’après-minuit",
+        "Chambre 12",
+        "Silence chaud",
+        "Velours",
+        "Basse lumière",
+        "Weekend privé",
+        "Peau & néon",
       ];
-      for (let i = videos.length; i < 10; i += 1) {
-        els.grid.appendChild(makeCard(names[i % names.length], i * 911, "Aperçu démo"));
+      for (let i = videos.length; i < 7; i += 1) {
+        els.grid.appendChild(card(names[i % names.length], i * 733, "Aperçu démo", "Demo"));
       }
     }
   }
 
   async function boot() {
     try {
-      const [cfgRes, vidRes] = await Promise.all([fetch("/api/config"), fetch("/api/videos")]);
-      if (cfgRes.ok) applyBrand(await cfgRes.json());
-      if (vidRes.ok) {
-        const data = await vidRes.json();
-        allVideos = data.videos || [];
-      }
+      const [c, v] = await Promise.all([fetch("/api/config"), fetch("/api/videos")]);
+      if (c.ok) applyBrand(await c.json());
+      if (v.ok) allVideos = (await v.json()).videos || [];
     } catch {
       applyBrand({});
-      allVideos = [];
     }
     render();
   }
 
-  function enter() {
+  els.gateEnter?.addEventListener("click", () => {
     if (els.gate) els.gate.hidden = true;
     if (els.app) els.app.hidden = false;
-    // iOS: force a reflow so sticky/nav paints correctly after unlock
-    requestAnimationFrame(() => {
-      window.scrollTo(0, 0);
-    });
-  }
+    requestAnimationFrame(() => window.scrollTo(0, 0));
+  });
 
-  els.gateEnter?.addEventListener("click", enter);
   els.gateLeave?.addEventListener("click", () => {
     window.location.href = "https://www.google.com";
   });
 
-  document.querySelectorAll(".cats__item").forEach((btn) => {
+  document.querySelectorAll(".filter").forEach((btn) => {
     btn.addEventListener("click", () => {
-      document.querySelectorAll(".cats__item").forEach((b) => b.classList.remove("is-on"));
+      document.querySelectorAll(".filter").forEach((b) => b.classList.remove("is-on"));
       btn.classList.add("is-on");
       filter = btn.dataset.filter === "new" ? "new" : "all";
       render();
-    });
-  });
-
-  document.querySelectorAll(".tabs__btn").forEach((btn) => {
-    btn.addEventListener("click", () => {
-      document.querySelectorAll(".tabs__btn").forEach((b) => b.classList.remove("is-on"));
-      btn.classList.add("is-on");
     });
   });
 

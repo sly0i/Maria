@@ -6,74 +6,71 @@
       name="viewport"
       content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1"
     />
-    <meta name="theme-color" content="#000000" />
+    <meta name="theme-color" content="#081018" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
-    <title>Démo — EroticX</title>
+    <title>Démo DA — EroticX</title>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
-      href="https://fonts.googleapis.com/css2?family=Inter:wght@500;600;700;800&family=Oswald:wght@600;700&display=swap"
+      href="https://fonts.googleapis.com/css2?family=Sora:wght@500;600;700;800&family=Fraunces:opsz,wght@9..144,500;9..144,700&display=swap"
       rel="stylesheet"
     />
     <link rel="stylesheet" href="/demo.css" />
   </head>
   <body>
-    <div class="demo-bar">
-      <span><b>DÉMO</b> — aperçu esthétique. Ancien site intact.</span>
-      <a href="/">Ancien site</a>
+    <div class="ribbon">
+      <span>Nouvelle DA — démo seule</span>
+      <a href="/">Voir l’ancien site</a>
     </div>
 
     <div id="gate" class="gate" role="dialog" aria-modal="true" aria-labelledby="gate-title">
-      <div class="gate__box">
+      <div class="gate__panel">
+        <div class="gate__orb" aria-hidden="true"></div>
         <img id="gate-logo" class="gate__logo" src="/assets/logo.svg" alt="" />
         <p id="gate-brand" class="gate__brand">EroticX</p>
-        <h1 id="gate-title" class="gate__title">18+ seulement</h1>
-        <p class="gate__text">
-          Ce site contient du contenu pornographique. Entre seulement si tu as l’âge légal.
-        </p>
-        <button type="button" id="gate-enter" class="btn btn--orange">J’ai 18 ans ou plus</button>
-        <button type="button" id="gate-leave" class="btn btn--dark">Sortir</button>
+        <h1 id="gate-title" class="gate__title">Espace adulte</h1>
+        <p class="gate__text">Confirme que tu as 18 ans pour découvrir la nouvelle direction artistique.</p>
+        <button type="button" id="gate-enter" class="pill pill--coral">J’ai 18 ans+</button>
+        <button type="button" id="gate-leave" class="pill pill--ghost">Quitter</button>
       </div>
     </div>
 
     <div id="app" class="app" hidden>
-      <header class="nav">
-        <button type="button" class="nav__brand" id="nav-brand">
-          <img id="nav-logo" class="nav__logo" src="/assets/logo.svg" alt="" />
-          <span id="nav-name" class="nav__name">EroticX</span>
+      <header class="top">
+        <button type="button" class="logo" id="nav-brand">
+          <img id="nav-logo" src="/assets/logo.svg" alt="" />
+          <span id="nav-name">EroticX</span>
         </button>
-        <div class="nav__right">
-          <button type="button" class="btn btn--orange btn--mini">Connexion</button>
-        </div>
+        <button type="button" class="pill pill--mint pill--sm">Compte</button>
       </header>
 
-      <nav class="cats" aria-label="Catégories">
-        <button type="button" class="cats__item is-on" data-filter="all">Tout</button>
-        <button type="button" class="cats__item" data-filter="new">Nouveau</button>
-        <button type="button" class="cats__item" data-filter="hot">Hot</button>
-        <button type="button" class="cats__item" data-filter="top">Top</button>
+      <section class="splash">
+        <p id="hero-brand" class="splash__brand">EroticX</p>
+        <p id="hero-line" class="splash__line">Regarde les dernières publications</p>
+        <div class="splash__row">
+          <a class="pill pill--coral" href="#feed">Explorer</a>
+          <button type="button" class="pill pill--ghost">Connexion</button>
+        </div>
+      </section>
+
+      <nav class="filters" aria-label="Filtres">
+        <button type="button" class="filter is-on" data-filter="all">Tous</button>
+        <button type="button" class="filter" data-filter="new">Nouveautés</button>
+        <button type="button" class="filter" data-filter="hot">Sélection</button>
       </nav>
 
-      <main class="main">
-        <p id="site-desc" class="desc">Regarde les dernières publications</p>
-
-        <section class="block" aria-labelledby="vid-title">
-          <div class="block__head">
-            <h2 id="vid-title">Vidéos</h2>
-            <div class="tabs">
-              <button type="button" class="tabs__btn is-on">Récentes</button>
-              <button type="button" class="tabs__btn">Hot</button>
-              <button type="button" class="tabs__btn">Top</button>
-            </div>
-          </div>
-          <div id="grid" class="grid"></div>
-          <p id="empty" class="empty" hidden>Aucune vidéo pour le moment.</p>
-        </section>
+      <main id="feed" class="feed">
+        <div class="feed__head">
+          <h2>Sélection du moment</h2>
+          <p>Grille douce, DA moderne — pas le style tube classique.</p>
+        </div>
+        <div id="grid" class="mosaic"></div>
+        <p id="empty" class="empty" hidden>Rien pour l’instant.</p>
       </main>
 
-      <footer class="footer">
-        <a href="/">← Ancien site</a>
-        <span>Démo visuelle uniquement</span>
+      <footer class="end">
+        <a href="/">← Ancien rendu</a>
+        <span>Démo visuelle · iPhone / Android / PC</span>
       </footer>
     </div>
 

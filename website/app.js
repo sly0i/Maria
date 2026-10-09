@@ -32,7 +32,7 @@
   });
 
   function applyBrand(cfg) {
-    const name = cfg.brandName || "Mon site";
+    const name = cfg.brandName || "EroticX";
     const logo = cfg.logoPath || "/assets/logo.svg";
 
     document.title = name;
@@ -88,6 +88,17 @@
     return allVideos;
   }
 
+  function timeLabel(seed) {
+    const n = Number(seed) || 0;
+    return `${String((n % 17) + 5).padStart(2, "0")}:${String((n % 50) + 10).padStart(2, "0")}`;
+  }
+
+  function viewsLabel(seed) {
+    const n = Number(seed) || 0;
+    const v = 1400 + (n % 9200);
+    return `${(v / 1000).toFixed(1)}k`;
+  }
+
   function renderVideos(videos) {
     if (!els.videoList) return;
     els.videoList.innerHTML = "";
@@ -105,27 +116,38 @@
 
     if (els.videoEmpty) els.videoEmpty.hidden = true;
 
-    for (const video of videos) {
-      const article = document.createElement("article");
-      article.className = "video-card";
+    const tones = ["a", "b", "c"];
 
+    videos.forEach((video, index) => {
+      const tone = tones[index % 3];
+      const fresh = isNewVideo(video);
       const link = document.createElement("a");
-      link.className = "video-card__link";
+      link.className = `shot shot--${tone}`;
       link.href = video.watchUrl || `/watch/${video.id}`;
-      link.setAttribute("aria-label", `Regarder ${video.title}`);
+      link.setAttribute("aria-label", `Regarder ${video.title || "vidéo"}`);
 
       link.innerHTML = `
-        <div class="video-card__thumb">
-          <span class="video-card__play" aria-hidden="true"></span>
-          <span class="video-card__hd">HD</span>
-          <span class="video-card__time">10:24</span>
+        <div class="shot__frame">
+          <span class="shot__art" aria-hidden="true"></span>
+          <span class="shot__mesh" aria-hidden="true"></span>
+          <span class="shot__veil" aria-hidden="true"></span>
+          <span class="shot__play" aria-hidden="true"></span>
+          <span class="shot__badge"></span>
+          <span class="shot__hd">HD</span>
+          <div class="shot__foot">
+            <h4 class="shot__title"></h4>
+            <p class="shot__meta">
+              <span class="shot__views"></span>
+              <span class="shot__time"></span>
+            </p>
+          </div>
         </div>
-        <h3 class="video-card__title"></h3>
       `;
-      link.querySelector(".video-card__title").textContent = video.title;
-      const mins = String((Number(video.createdAt) % 17) + 4).padStart(2, "0");
-      const secs = String((Number(video.createdAt) % 50) + 10).padStart(2, "0");
-      link.querySelector(".video-card__time").textContent = `${mins}:${secs}`;
+
+      link.querySelector(".shot__badge").textContent = fresh ? "Nouveau" : index === 0 ? "Tonight" : "Cut";
+      link.querySelector(".shot__title").textContent = video.title || "Sans titre";
+      link.querySelector(".shot__views").textContent = `${viewsLabel(video.createdAt || index)} vues`;
+      link.querySelector(".shot__time").textContent = timeLabel(video.createdAt || index);
 
       link.addEventListener("click", (event) => {
         trackStat("video_click");
@@ -134,18 +156,17 @@
         auth.requireAccess();
       });
 
-      article.appendChild(link);
-      els.videoList.appendChild(article);
-    }
+      els.videoList.appendChild(link);
+    });
   }
 
   function setFilter(filter) {
     activeFilter = filter === "new" ? "new" : "all";
-    document.querySelectorAll(".cat-bar__item").forEach((btn) => {
-      btn.classList.toggle("is-active", btn.dataset.filter === activeFilter);
+    document.querySelectorAll(".filter").forEach((btn) => {
+      btn.classList.toggle("is-on", btn.dataset.filter === activeFilter);
     });
     const title = document.getElementById("gallery-title");
-    if (title) title.textContent = activeFilter === "new" ? "Nouveau" : "Vidéos";
+    if (title) title.textContent = activeFilter === "new" ? "Nouveau" : "Sélection";
     renderVideos(videosForFilter(activeFilter));
   }
 
@@ -157,11 +178,11 @@
   }
 
   function showAdSlide(index) {
-    const slides = els.adsList?.querySelectorAll(".ad-card");
+    const slides = els.adsList?.querySelectorAll(".billboard__slide");
     if (!slides?.length) return;
     adsIndex = ((index % slides.length) + slides.length) % slides.length;
     slides.forEach((slide, i) => {
-      slide.classList.toggle("is-active", i === adsIndex);
+      slide.classList.toggle("is-on", i === adsIndex);
       const video = slide.querySelector("video");
       if (video) {
         if (i === adsIndex) {
@@ -171,8 +192,8 @@
         }
       }
     });
-    els.adsDots?.querySelectorAll(".ads-dots__dot").forEach((dot, i) => {
-      dot.classList.toggle("is-active", i === adsIndex);
+    els.adsDots?.querySelectorAll("button").forEach((dot, i) => {
+      dot.classList.toggle("is-on", i === adsIndex);
     });
   }
 
@@ -191,63 +212,56 @@
       els.adsDots.hidden = true;
     }
 
+    const frame = els.adsList.closest(".billboard__frame");
+
     if (!ads.length) {
       els.adsSection.hidden = true;
+      if (frame) frame.classList.add("is-empty");
       return;
     }
 
     els.adsSection.hidden = false;
+    if (frame) frame.classList.remove("is-empty");
     adsIndex = 0;
 
     ads.forEach((ad, index) => {
       const link = document.createElement("a");
-      link.className = "ad-card" + (index === 0 ? " is-active" : "");
-      link.href = ad.redirectUrl;
+      link.className = "billboard__slide" + (index === 0 ? " is-on" : "");
+      link.href = ad.redirectUrl || "#";
       link.target = "_blank";
       link.rel = "noopener noreferrer";
       link.setAttribute("aria-label", ad.title ? `Publicité : ${ad.title}` : "Ouvrir la publicité");
 
-      const title = ad.title ? String(ad.title) : "";
       if (ad.mediaType === "video") {
         const video = document.createElement("video");
-        video.className = "ad-card__media";
         video.muted = true;
         video.loop = true;
         video.playsInline = true;
         video.autoplay = true;
         video.preload = "metadata";
+        video.setAttribute("playsinline", "");
         video.src = ad.url;
         link.appendChild(video);
       } else {
         const img = document.createElement("img");
-        img.className = "ad-card__media";
         img.src = ad.url;
         img.alt = "";
         link.appendChild(img);
       }
 
       const shade = document.createElement("span");
-      shade.className = "ad-card__shade";
+      shade.className = "billboard__shade";
       shade.setAttribute("aria-hidden", "true");
       link.appendChild(shade);
 
-      const badge = document.createElement("span");
-      badge.className = "ad-card__badge";
-      badge.textContent = "Pub";
-      link.appendChild(badge);
-
       const meta = document.createElement("span");
-      meta.className = "ad-card__meta";
-      if (title) {
-        const titleEl = document.createElement("span");
-        titleEl.className = "ad-card__title";
-        titleEl.textContent = title;
-        meta.appendChild(titleEl);
-      }
-      const cta = document.createElement("span");
-      cta.className = "ad-card__cta";
-      cta.textContent = "Voir l’offre ➔";
-      meta.appendChild(cta);
+      meta.className = "billboard__meta";
+      meta.innerHTML = `
+        <span class="billboard__badge">Pub</span>
+        <p class="billboard__title"></p>
+        <p class="billboard__cta">Découvrir ➔</p>
+      `;
+      meta.querySelector(".billboard__title").textContent = ad.title || "Sponsor";
       link.appendChild(meta);
 
       link.addEventListener("click", () => trackStat("ad_click"));
@@ -259,7 +273,7 @@
       ads.forEach((_, index) => {
         const dot = document.createElement("button");
         dot.type = "button";
-        dot.className = "ads-dots__dot" + (index === 0 ? " is-active" : "");
+        if (index === 0) dot.className = "is-on";
         dot.setAttribute("aria-label", `Publicité ${index + 1}`);
         dot.addEventListener("click", () => {
           showAdSlide(index);
@@ -350,19 +364,18 @@
   });
   els.siteBrand?.addEventListener("click", reopenAgeMessage);
 
-  document.querySelectorAll(".cat-bar__item").forEach((btn) => {
+  document.querySelectorAll(".filter").forEach((btn) => {
     btn.addEventListener("click", () => {
       setFilter(btn.dataset.filter || "all");
     });
   });
 
-  // Hide gate content until brand is applied, so old placeholder name/logo never stick
   if (els.gate) els.gate.style.visibility = "hidden";
 
   Promise.all([
     loadPublicData().catch(() => {
       applyBrand({
-        brandName: document.getElementById("age-brand-name")?.textContent || "Mon site",
+        brandName: document.getElementById("age-brand-name")?.textContent || "EroticX",
         logoPath: document.getElementById("age-logo")?.getAttribute("src") || "/assets/logo.svg",
         tagline: document.getElementById("hero-tagline")?.textContent || "",
         description: document.getElementById("site-description")?.textContent || "",

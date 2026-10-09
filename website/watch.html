@@ -2,17 +2,27 @@
 <html lang="fr">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Vidéo — Maria</title>
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1"
+    />
+    <meta name="theme-color" content="#070608" />
+    <title>Vidéo — EroticX</title>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
-      href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700;12..96,800&family=Outfit:wght@400;500;600;700&display=swap"
+      href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,600;0,700;1,600&family=Outfit:wght@400;500;600;700;800&display=swap"
       rel="stylesheet"
     />
     <link rel="stylesheet" href="/styles.css" />
   </head>
   <body>
+    <div class="fx" aria-hidden="true">
+      <span class="fx__orb fx__orb--a"></span>
+      <span class="fx__orb fx__orb--b"></span>
+      <span class="fx__grain"></span>
+    </div>
+
     <div id="auth-modal" class="auth-modal" hidden>
       <div class="auth-modal__panel" role="dialog" aria-modal="true" aria-labelledby="auth-title">
         <button type="button" id="auth-close" class="auth-modal__close" aria-label="Fermer">×</button>
@@ -21,8 +31,8 @@
           <h2 id="auth-title" class="auth-modal__title">Connexion requise</h2>
           <p class="auth-modal__text">Connecte-toi ou crée un compte pour regarder cette vidéo.</p>
           <div class="auth-modal__actions">
-            <button type="button" id="auth-goto-login" class="btn btn--confirm">Se connecter</button>
-            <button type="button" id="auth-goto-register" class="btn btn--deny">Créer un compte</button>
+            <button type="button" id="auth-goto-login" class="cta">Se connecter</button>
+            <button type="button" id="auth-goto-register" class="cta cta--ghost">Créer un compte</button>
           </div>
         </div>
 
@@ -50,8 +60,8 @@
               Si tu viens de créer un compte : attends le SMS (~5 min) pour obtenir ton code, valide-le, puis
               attends qu’un admin valide ton inscription avant de pouvoir te connecter aux vidéos.
             </p>
-            <button type="submit" class="btn btn--confirm">Se connecter</button>
-            <button type="button" id="login-back" class="btn btn--deny">Retour</button>
+            <button type="submit" class="cta">Se connecter</button>
+            <button type="button" id="login-back" class="cta cta--ghost">Retour</button>
             <p id="login-error" class="auth-error" hidden></p>
           </form>
         </div>
@@ -71,7 +81,7 @@
               Après avoir inscrit ton numéro, tu recevras un code à 4 chiffres par SMS sous environ 5 minutes.
               Attends bien de le recevoir avant de continuer.
             </p>
-            <button type="submit" id="register-submit" class="btn btn--confirm">Continuer</button>
+            <button type="submit" id="register-submit" class="cta">Continuer</button>
             <p id="register-error" class="auth-error" hidden></p>
           </form>
 
@@ -94,7 +104,7 @@
               sur « Valider mon code ». Ensuite, un admin validera ton inscription (compte environ 5 minutes
               aussi).
             </p>
-            <button type="submit" class="btn btn--confirm">Valider mon code</button>
+            <button type="submit" class="cta">Valider mon code</button>
             <p id="code-error" class="auth-error" hidden></p>
           </form>
 
@@ -106,7 +116,7 @@
             C’est sécurisé et à but simplement pour te créer un compte. Tes infos ne servent qu’à
             l’inscription — c’est safe.
           </p>
-          <button type="button" id="register-back" class="btn btn--deny">Retour</button>
+          <button type="button" id="register-back" class="cta cta--ghost">Retour</button>
         </div>
       </div>
     </div>
@@ -114,13 +124,13 @@
     <div id="site" class="site site--watch">
       <header class="top">
         <a class="brand" href="/" aria-label="Retour à l’accueil">
-          <img id="site-logo" class="brand__logo" src="/assets/logo.svg" alt="" />
-          <span id="site-brand-name" class="brand__name">Maria</span>
+          <img id="site-logo" src="/assets/logo.svg" alt="" />
+          <span id="site-brand-name">EroticX</span>
         </a>
         <div class="top__actions">
           <span id="member-badge" class="member-badge" hidden></span>
-          <button type="button" id="auth-open" class="btn btn--ghost-sm">Connexion</button>
-          <button type="button" id="auth-logout" class="btn btn--ghost-sm" hidden>Déconnexion</button>
+          <button type="button" id="auth-open" class="cta cta--sm">Connexion</button>
+          <button type="button" id="auth-logout" class="cta cta--sm cta--ghost" hidden>Déconnexion</button>
         </div>
       </header>
 
@@ -130,7 +140,7 @@
           <video id="watch-player" class="watch__player" controls playsinline preload="metadata" hidden></video>
           <div id="watch-locked" class="watch__locked">
             <p id="watch-locked-text">Connecte-toi pour regarder cette vidéo.</p>
-            <button type="button" id="watch-unlock-btn" class="btn btn--confirm">Se connecter / Créer un compte</button>
+            <button type="button" id="watch-unlock-btn" class="cta">Se connecter / Créer un compte</button>
           </div>
         </div>
         <h1 id="watch-title" class="watch__title">Chargement…</h1>

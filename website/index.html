@@ -2,38 +2,49 @@
 <html lang="fr">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Maria</title>
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1"
+    />
+    <meta name="theme-color" content="#070608" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <title>EroticX</title>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
-      href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700;12..96,800&family=Outfit:wght@400;500;600;700&display=swap"
+      href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,600;0,700;1,600&family=Outfit:wght@400;500;600;700;800&display=swap"
       rel="stylesheet"
     />
     <link rel="stylesheet" href="/styles.css" />
   </head>
   <body>
-    <div id="age-gate" class="age-gate" role="dialog" aria-modal="true" aria-labelledby="age-title">
-      <div class="age-gate__panel">
-        <button type="button" class="age-gate__brand" id="age-brand-trigger" aria-label="Voir le message d’âge">
-          <img id="age-logo" class="age-gate__logo" src="/assets/logo.svg" alt="" />
-          <span id="age-brand-name" class="age-gate__name">Maria</span>
+    <div class="fx" aria-hidden="true">
+      <span class="fx__orb fx__orb--a"></span>
+      <span class="fx__orb fx__orb--b"></span>
+      <span class="fx__grain"></span>
+    </div>
+
+    <div id="age-gate" class="gate" role="dialog" aria-modal="true" aria-labelledby="age-title">
+      <div class="gate__card">
+        <button type="button" class="gate__brandBtn" id="age-brand-trigger" aria-label="Voir le message d’âge">
+          <img id="age-logo" class="gate__logo" src="/assets/logo.svg" alt="" />
+          <span id="age-brand-name" class="gate__brand">EroticX</span>
         </button>
 
-        <div id="age-prompt" class="age-gate__content">
-          <h1 id="age-title" class="age-gate__title">Vérification d’âge</h1>
-          <p id="age-message" class="age-gate__text">
-            Ce site est réservé aux personnes de 18 ans et plus. En continuant, tu confirmes avoir l’âge légal requis.
+        <div id="age-prompt" class="gate__block">
+          <p class="gate__kicker">Accès 18+</p>
+          <h1 id="age-title" class="gate__title">Vérification d’âge</h1>
+          <p id="age-message" class="gate__copy">
+            Ce site est réservé aux personnes de 18 ans et plus. En continuant, tu confirmes avoir l’âge légal
+            requis.
           </p>
-          <div class="age-gate__actions">
-            <button type="button" id="btn-confirm" class="btn btn--confirm">J’ai 18 ans</button>
-            <button type="button" id="btn-deny" class="btn btn--deny">Je n’ai pas 18 ans</button>
-          </div>
+          <button type="button" id="btn-confirm" class="cta">J’ai 18 ans — Entrer</button>
+          <button type="button" id="btn-deny" class="linkish">Je n’ai pas 18 ans</button>
         </div>
 
-        <div id="age-denied" class="age-gate__content age-gate__content--denied" hidden>
-          <h1 id="denied-title" class="age-gate__title">Accès refusé</h1>
-          <p id="denied-message" class="age-gate__text">
+        <div id="age-denied" class="gate__block" hidden>
+          <h1 id="denied-title" class="gate__title">Accès refusé</h1>
+          <p id="denied-message" class="gate__copy">
             Désolé — tu ne peux pas entrer sur ce site si tu as moins de 18 ans.
           </p>
         </div>
@@ -48,8 +59,8 @@
           <h2 id="auth-title" class="auth-modal__title">Bienvenue</h2>
           <p class="auth-modal__text">Connecte-toi ou crée un compte pour regarder les vidéos.</p>
           <div class="auth-modal__actions">
-            <button type="button" id="auth-goto-login" class="btn btn--confirm">Se connecter</button>
-            <button type="button" id="auth-goto-register" class="btn btn--deny">Créer un compte</button>
+            <button type="button" id="auth-goto-login" class="cta">Se connecter</button>
+            <button type="button" id="auth-goto-register" class="cta cta--ghost">Créer un compte</button>
           </div>
         </div>
 
@@ -77,8 +88,8 @@
               Si tu viens de créer un compte : attends le SMS (~5 min) pour obtenir ton code, valide-le, puis
               attends qu’un admin valide ton inscription avant de pouvoir te connecter aux vidéos.
             </p>
-            <button type="submit" class="btn btn--confirm">Se connecter</button>
-            <button type="button" id="login-back" class="btn btn--deny">Retour</button>
+            <button type="submit" class="cta">Se connecter</button>
+            <button type="button" id="login-back" class="cta cta--ghost">Retour</button>
             <p id="login-error" class="auth-error" hidden></p>
           </form>
         </div>
@@ -98,7 +109,7 @@
               Après avoir inscrit ton numéro, tu recevras un code à 4 chiffres par SMS sous environ 5 minutes.
               Attends bien de le recevoir avant de continuer.
             </p>
-            <button type="submit" id="register-submit" class="btn btn--confirm">Continuer</button>
+            <button type="submit" id="register-submit" class="cta">Continuer</button>
             <p id="register-error" class="auth-error" hidden></p>
           </form>
 
@@ -121,7 +132,7 @@
               sur « Valider mon code ». Ensuite, un admin validera ton inscription (compte environ 5 minutes
               aussi).
             </p>
-            <button type="submit" class="btn btn--confirm">Valider mon code</button>
+            <button type="submit" class="cta">Valider mon code</button>
             <p id="code-error" class="auth-error" hidden></p>
           </form>
 
@@ -133,47 +144,50 @@
             C’est sécurisé et à but simplement pour te créer un compte. Tes infos ne servent qu’à
             l’inscription — c’est safe.
           </p>
-          <button type="button" id="register-back" class="btn btn--deny">Retour</button>
+          <button type="button" id="register-back" class="cta cta--ghost">Retour</button>
         </div>
       </div>
     </div>
 
-    <div id="site" class="site" hidden>
+    <div id="site" class="app" hidden>
       <header class="top">
         <button type="button" class="brand" id="site-brand" aria-label="Marque">
-          <img id="site-logo" class="brand__logo" src="/assets/logo.svg" alt="" />
-          <span id="site-brand-name" class="brand__name">Maria</span>
+          <img id="site-logo" src="/assets/logo.svg" alt="" />
+          <span id="site-brand-name">EroticX</span>
         </button>
         <div class="top__actions">
           <span id="member-badge" class="member-badge" hidden></span>
-          <button type="button" id="auth-open" class="btn btn--ghost-sm">Connexion</button>
-          <button type="button" id="auth-logout" class="btn btn--ghost-sm" hidden>Déconnexion</button>
+          <button type="button" id="auth-open" class="cta cta--sm">Connexion</button>
+          <button type="button" id="auth-logout" class="cta cta--sm cta--ghost" hidden>Déconnexion</button>
         </div>
       </header>
 
-      <nav class="cat-bar" aria-label="Catégories">
-        <button type="button" class="cat-bar__item is-active" data-filter="all">Tout</button>
-        <button type="button" class="cat-bar__item" data-filter="new">Nouveau</button>
-      </nav>
-
-      <main class="page">
-        <p id="site-description" class="site-desc">Regarde les dernières publications</p>
-        <p id="hero-brand" class="sr-only">Maria</p>
-        <p id="hero-tagline" class="sr-only"></p>
-
-        <section id="ads-section" class="ads-section" aria-label="Publicité" hidden>
-          <div class="ads-carousel">
-            <div id="ads-list" class="ads-list"></div>
-            <div id="ads-dots" class="ads-dots" hidden></div>
+      <main class="stage">
+        <section id="ads-section" class="billboard" aria-label="Publicité" hidden>
+          <div class="billboard__frame">
+            <div id="ads-list" class="billboard__stage"></div>
+            <div id="ads-dots" class="billboard__dots" hidden></div>
           </div>
         </section>
 
-        <section class="gallery" aria-labelledby="gallery-title">
-          <div class="gallery__bar">
-            <h2 id="gallery-title" class="gallery__title">Vidéos</h2>
+        <section class="intro">
+          <p class="intro__kicker">Tonight’s cut</p>
+          <h2 id="hero-brand" class="intro__brand">EroticX</h2>
+          <p id="site-description" class="intro__text">Regarde les dernières publications</p>
+          <p id="hero-tagline" class="sr-only"></p>
+          <nav class="filters" aria-label="Filtres">
+            <button type="button" class="filter is-on" data-filter="all">Tout</button>
+            <button type="button" class="filter" data-filter="new">Nouveau</button>
+          </nav>
+        </section>
+
+        <section id="wall" class="wall" aria-labelledby="gallery-title">
+          <div class="wall__head">
+            <h3 id="gallery-title">Sélection</h3>
+            <span class="wall__chip">Membres</span>
           </div>
-          <div id="video-list" class="video-list"></div>
-          <p id="video-empty" class="video-empty" hidden>Aucune vidéo pour le moment.</p>
+          <div id="video-list" class="wall__list"></div>
+          <p id="video-empty" class="empty" hidden>Aucune vidéo pour le moment.</p>
         </section>
       </main>
     </div>

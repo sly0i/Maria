@@ -32,7 +32,7 @@
   });
 
   function applyBrand(cfg) {
-    const name = cfg.brandName || "Maria";
+    const name = cfg.brandName || "EroticX";
     const logo = cfg.logoPath || "/assets/logo.svg";
     document.title = `${els.title?.textContent || "Vidéo"} — ${name}`;
     if (els.brandName) els.brandName.textContent = name;

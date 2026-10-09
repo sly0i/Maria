@@ -6,23 +6,17 @@
       name="viewport"
       content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1"
     />
-    <meta name="theme-color" content="#070608" />
+    <meta name="theme-color" content="#0a0006" />
     <title>Vidéo — EroticX</title>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
-      href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,600;0,700;1,600&family=Outfit:wght@400;500;600;700;800&display=swap"
+      href="https://fonts.googleapis.com/css2?family=Pacifico&family=Poppins:wght@400;500;600;700;800&display=swap"
       rel="stylesheet"
     />
     <link rel="stylesheet" href="/styles.css" />
   </head>
   <body>
-    <div class="fx" aria-hidden="true">
-      <span class="fx__orb fx__orb--a"></span>
-      <span class="fx__orb fx__orb--b"></span>
-      <span class="fx__grain"></span>
-    </div>
-
     <div id="auth-modal" class="auth-modal" hidden>
       <div class="auth-modal__panel" role="dialog" aria-modal="true" aria-labelledby="auth-title">
         <button type="button" id="auth-close" class="auth-modal__close" aria-label="Fermer">×</button>
@@ -123,14 +117,16 @@
 
     <div id="site" class="site site--watch">
       <header class="top">
-        <a class="brand" href="/" aria-label="Retour à l’accueil">
-          <img id="site-logo" src="/assets/logo.svg" alt="" />
-          <span id="site-brand-name">EroticX</span>
-        </a>
-        <div class="top__actions">
-          <span id="member-badge" class="member-badge" hidden></span>
-          <button type="button" id="auth-open" class="cta cta--sm">Connexion</button>
-          <button type="button" id="auth-logout" class="cta cta--sm cta--ghost" hidden>Déconnexion</button>
+        <div class="top__row">
+          <a class="brand" href="/" aria-label="Retour à l’accueil">
+            <img id="site-logo" src="/assets/logo.svg" alt="" />
+            <span id="site-brand-name" class="brand__name">EroticX</span>
+          </a>
+          <div class="top__actions">
+            <span id="member-badge" class="member-badge" hidden></span>
+            <button type="button" id="auth-open" class="cta cta--sm">Connexion</button>
+            <button type="button" id="auth-logout" class="cta cta--sm cta--ghost" hidden>Déconnexion</button>
+          </div>
         </div>
       </header>
 

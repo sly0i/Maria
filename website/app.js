@@ -15,6 +15,7 @@
     ageBrandName: document.getElementById("age-brand-name"),
     siteBrandName: document.getElementById("site-brand-name"),
     heroBrand: document.getElementById("hero-brand"),
+    heroBrandKicker: document.getElementById("hero-brand-kicker"),
     heroTagline: document.getElementById("hero-tagline"),
     siteDescription: document.getElementById("site-description"),
     videoList: document.getElementById("video-list"),
@@ -22,6 +23,9 @@
     adsSection: document.getElementById("ads-section"),
     adsList: document.getElementById("ads-list"),
     adsDots: document.getElementById("ads-dots"),
+    videoSearch: document.getElementById("video-search"),
+    introAuth: document.getElementById("intro-auth"),
+    dockAuth: document.getElementById("dock-auth"),
   };
 
   let adsTimer = null;
@@ -31,15 +35,27 @@
     autoOpenOnEntry: true,
   });
 
+  function brandHtml(name) {
+    const raw = String(name || "EroticX");
+    if (/x$/i.test(raw) && raw.length > 1) {
+      return `${raw.slice(0, -1)}<span class="brand__x">X</span>`;
+    }
+    return raw;
+  }
+
   function applyBrand(cfg) {
     const name = cfg.brandName || "EroticX";
     const logo = cfg.logoPath || "/assets/logo.svg";
 
     document.title = name;
 
-    [els.ageBrandName, els.siteBrandName, els.heroBrand].forEach((node) => {
-      if (node) node.textContent = name;
+    [els.ageBrandName, els.siteBrandName].forEach((node) => {
+      if (!node) return;
+      node.innerHTML = brandHtml(name);
     });
+
+    if (els.heroBrand) els.heroBrand.textContent = name;
+    if (els.heroBrandKicker) els.heroBrandKicker.textContent = name.toUpperCase();
 
     [els.ageLogo, els.siteLogo].forEach((img) => {
       if (!img) return;
@@ -48,7 +64,7 @@
     });
 
     if (els.heroTagline) {
-      els.heroTagline.textContent = cfg.tagline || "";
+      els.heroTagline.textContent = cfg.tagline || "Regarde sans limite.";
     }
 
     if (els.siteDescription) {
@@ -60,6 +76,7 @@
   const NEW_WINDOW_MS = 24 * 60 * 60 * 1000;
   let allVideos = [];
   let activeFilter = "all";
+  let searchQuery = "";
 
   function trackStat(type) {
     try {
@@ -83,9 +100,13 @@
     return created > 0 && Date.now() - created < NEW_WINDOW_MS;
   }
 
-  function videosForFilter(filter) {
-    if (filter === "new") return allVideos.filter(isNewVideo);
-    return allVideos;
+  function videosForView() {
+    let list = activeFilter === "new" ? allVideos.filter(isNewVideo) : allVideos;
+    const q = searchQuery.trim().toLowerCase();
+    if (q) {
+      list = list.filter((v) => String(v.title || "").toLowerCase().includes(q));
+    }
+    return list;
   }
 
   function timeLabel(seed) {
@@ -106,10 +127,13 @@
     if (!videos.length) {
       if (els.videoEmpty) {
         els.videoEmpty.hidden = false;
-        els.videoEmpty.textContent =
-          activeFilter === "new"
-            ? "Aucune nouvelle vidéo (24 h)."
-            : "Aucune vidéo pour le moment.";
+        if (searchQuery.trim()) {
+          els.videoEmpty.textContent = "Aucune vidéo ne correspond à ta recherche.";
+        } else if (activeFilter === "new") {
+          els.videoEmpty.textContent = "Aucune nouvelle vidéo (24 h).";
+        } else {
+          els.videoEmpty.textContent = "Aucune vidéo pour le moment.";
+        }
       }
       return;
     }
@@ -129,7 +153,6 @@
       link.innerHTML = `
         <div class="shot__frame">
           <span class="shot__art" aria-hidden="true"></span>
-          <span class="shot__mesh" aria-hidden="true"></span>
           <span class="shot__veil" aria-hidden="true"></span>
           <span class="shot__play" aria-hidden="true"></span>
           <span class="shot__badge"></span>
@@ -144,7 +167,7 @@
         </div>
       `;
 
-      link.querySelector(".shot__badge").textContent = fresh ? "Nouveau" : index === 0 ? "Tonight" : "Cut";
+      link.querySelector(".shot__badge").textContent = fresh ? "Nouveau" : "Tendance";
       link.querySelector(".shot__title").textContent = video.title || "Sans titre";
       link.querySelector(".shot__views").textContent = `${viewsLabel(video.createdAt || index)} vues`;
       link.querySelector(".shot__time").textContent = timeLabel(video.createdAt || index);
@@ -160,14 +183,20 @@
     });
   }
 
-  function setFilter(filter) {
-    activeFilter = filter === "new" ? "new" : "all";
-    document.querySelectorAll(".filter").forEach((btn) => {
+  function refreshList() {
+    const title = document.getElementById("gallery-title");
+    if (title) {
+      title.textContent = activeFilter === "new" ? "Nouveau" : "Tendances";
+    }
+    document.querySelectorAll(".tab").forEach((btn) => {
       btn.classList.toggle("is-on", btn.dataset.filter === activeFilter);
     });
-    const title = document.getElementById("gallery-title");
-    if (title) title.textContent = activeFilter === "new" ? "Nouveau" : "Sélection";
-    renderVideos(videosForFilter(activeFilter));
+    renderVideos(videosForView());
+  }
+
+  function setFilter(filter) {
+    activeFilter = filter === "new" ? "new" : "all";
+    refreshList();
   }
 
   function stopAdsCarousel() {
@@ -178,18 +207,15 @@
   }
 
   function showAdSlide(index) {
-    const slides = els.adsList?.querySelectorAll(".billboard__slide");
+    const slides = els.adsList?.querySelectorAll(".hero__slide");
     if (!slides?.length) return;
     adsIndex = ((index % slides.length) + slides.length) % slides.length;
     slides.forEach((slide, i) => {
       slide.classList.toggle("is-on", i === adsIndex);
       const video = slide.querySelector("video");
       if (video) {
-        if (i === adsIndex) {
-          video.play?.().catch(() => {});
-        } else {
-          video.pause?.();
-        }
+        if (i === adsIndex) video.play?.().catch(() => {});
+        else video.pause?.();
       }
     });
     els.adsDots?.querySelectorAll("button").forEach((dot, i) => {
@@ -212,21 +238,17 @@
       els.adsDots.hidden = true;
     }
 
-    const frame = els.adsList.closest(".billboard__frame");
-
     if (!ads.length) {
       els.adsSection.hidden = true;
-      if (frame) frame.classList.add("is-empty");
       return;
     }
 
     els.adsSection.hidden = false;
-    if (frame) frame.classList.remove("is-empty");
     adsIndex = 0;
 
     ads.forEach((ad, index) => {
       const link = document.createElement("a");
-      link.className = "billboard__slide" + (index === 0 ? " is-on" : "");
+      link.className = "hero__slide" + (index === 0 ? " is-on" : "");
       link.href = ad.redirectUrl || "#";
       link.target = "_blank";
       link.rel = "noopener noreferrer";
@@ -250,18 +272,18 @@
       }
 
       const shade = document.createElement("span");
-      shade.className = "billboard__shade";
+      shade.className = "hero__shade";
       shade.setAttribute("aria-hidden", "true");
       link.appendChild(shade);
 
       const meta = document.createElement("span");
-      meta.className = "billboard__meta";
+      meta.className = "hero__meta";
       meta.innerHTML = `
-        <span class="billboard__badge">Pub</span>
-        <p class="billboard__title"></p>
-        <p class="billboard__cta">Découvrir ➔</p>
+        <span class="hero__badge">Pub</span>
+        <p class="hero__title"></p>
+        <p class="hero__cta">Découvrir ➔</p>
       `;
-      meta.querySelector(".billboard__title").textContent = ad.title || "Sponsor";
+      meta.querySelector(".hero__title").textContent = ad.title || "Sponsor";
       link.appendChild(meta);
 
       link.addEventListener("click", () => trackStat("ad_click"));
@@ -294,14 +316,12 @@
       fetch("/api/ads"),
     ]);
 
-    if (configRes.ok) {
-      applyBrand(await configRes.json());
-    }
+    if (configRes.ok) applyBrand(await configRes.json());
 
     if (videosRes.ok) {
       const data = await videosRes.json();
       allVideos = data.videos || [];
-      setFilter(activeFilter);
+      refreshList();
     }
 
     if (adsRes.ok) {
@@ -357,17 +377,26 @@
     }
   }
 
+  function openAuth() {
+    auth.requireAccess();
+  }
+
   els.btnConfirm?.addEventListener("click", enterSite);
   els.btnDeny?.addEventListener("click", denyAccess);
   els.ageBrandTrigger?.addEventListener("click", () => {
     if (els.denied && !els.denied.hidden) showGate("prompt");
   });
   els.siteBrand?.addEventListener("click", reopenAgeMessage);
+  els.introAuth?.addEventListener("click", openAuth);
+  els.dockAuth?.addEventListener("click", openAuth);
 
-  document.querySelectorAll(".filter").forEach((btn) => {
-    btn.addEventListener("click", () => {
-      setFilter(btn.dataset.filter || "all");
-    });
+  document.querySelectorAll(".tab").forEach((btn) => {
+    btn.addEventListener("click", () => setFilter(btn.dataset.filter || "all"));
+  });
+
+  els.videoSearch?.addEventListener("input", () => {
+    searchQuery = els.videoSearch.value || "";
+    refreshList();
   });
 
   if (els.gate) els.gate.style.visibility = "hidden";
@@ -375,10 +404,10 @@
   Promise.all([
     loadPublicData().catch(() => {
       applyBrand({
-        brandName: document.getElementById("age-brand-name")?.textContent || "EroticX",
-        logoPath: document.getElementById("age-logo")?.getAttribute("src") || "/assets/logo.svg",
-        tagline: document.getElementById("hero-tagline")?.textContent || "",
-        description: document.getElementById("site-description")?.textContent || "",
+        brandName: "EroticX",
+        logoPath: "/assets/logo.svg",
+        tagline: "Regarde sans limite.",
+        description: "Regarde les dernières publications",
       });
     }),
     auth.refreshMember(),

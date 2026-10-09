@@ -6,54 +6,50 @@
       name="viewport"
       content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1"
     />
-    <meta name="theme-color" content="#0a0a0b" />
+    <meta name="theme-color" content="#070608" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
-    <title>DA Nightlife — Démo</title>
+    <title>DA Luxe — Démo</title>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
-      href="https://fonts.googleapis.com/css2?family=Newsreader:opsz,wght@6..72,500;6..72,700&family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap"
+      href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,600;0,700;1,600&family=Outfit:wght@400;500;600;700;800&display=swap"
       rel="stylesheet"
     />
-    <link rel="stylesheet" href="/demo.css?v=nightlife6" />
+    <link rel="stylesheet" href="/demo.css?v=luxe7" />
   </head>
   <body>
+    <div class="fx" aria-hidden="true">
+      <span class="fx__orb fx__orb--a"></span>
+      <span class="fx__orb fx__orb--b"></span>
+      <span class="fx__grain"></span>
+    </div>
+
     <div class="note">
-      <span>DA <b>Nightlife Éditorial</b> — totalement différente de l’ancien site</span>
+      <span>DA <b>Luxe Nocturne</b> — démo esthétique poussée</span>
       <a href="/">Ancien site</a>
     </div>
 
     <div id="gate" class="gate">
-      <div class="gate__inner">
-        <p class="gate__kicker">18+</p>
+      <div class="gate__card">
+        <p class="gate__kicker">Accès 18+</p>
         <img id="gate-logo" class="gate__logo" src="/assets/logo.svg" alt="" />
         <h1 id="gate-brand" class="gate__brand">EroticX</h1>
-        <p class="gate__copy">Nouvelle direction artistique. Contenu adulte — entre seulement si tu es majeur.</p>
-        <button type="button" id="gate-enter" class="MagentaBtn">Entrer</button>
-        <button type="button" id="gate-leave" class="ghostBtn">Sortir</button>
+        <p class="gate__copy">Entre dans une vitrine adulte plus sensuelle, plus cinématographique.</p>
+        <button type="button" id="gate-enter" class="cta">J’ai 18 ans — Entrer</button>
+        <button type="button" id="gate-leave" class="linkish">Sortir</button>
       </div>
     </div>
 
     <div id="app" class="app" hidden>
-      <aside class="rail">
-        <button type="button" class="rail__brand" id="nav-brand">
+      <header class="top">
+        <button type="button" class="brand" id="nav-brand">
           <img id="nav-logo" src="/assets/logo.svg" alt="" />
           <span id="nav-name">EroticX</span>
         </button>
-        <p id="rail-desc" class="rail__desc">Regarde les dernières publications</p>
-        <button type="button" class="MagentaBtn MagentaBtn--block">Connexion</button>
-        <a class="rail__back" href="/">← Ancien rendu</a>
-      </aside>
+        <button type="button" class="cta cta--sm">Compte</button>
+      </header>
 
-      <div class="stage">
-        <header class="mobileTop">
-          <button type="button" class="rail__brand" id="mobile-brand">
-            <img id="mobile-logo" src="/assets/logo.svg" alt="" />
-            <span id="mobile-name">EroticX</span>
-          </button>
-          <button type="button" class="MagentaBtn MagentaBtn--sm">Compte</button>
-        </header>
-
+      <main class="stage">
         <section id="pubs" class="billboard" aria-label="Publicité">
           <div class="billboard__frame">
             <div id="ad-stage" class="billboard__stage"></div>
@@ -62,31 +58,28 @@
           <p id="ad-empty" class="empty" hidden>Aucune pub — ajoute-en depuis l’admin.</p>
         </section>
 
-        <section class="feature" id="feature">
-          <div class="feature__copy">
-            <p class="feature__eyebrow">Tonight</p>
-            <h2 id="hero-brand" class="feature__title">EroticX</h2>
-            <p id="hero-line" class="feature__text">Une vitrine adulte plus éditoriale, plus désir.</p>
-            <a class="MagentaBtn" href="#wall">Voir la sélection</a>
-          </div>
+        <section class="intro">
+          <p class="intro__kicker">Tonight’s cut</p>
+          <h2 id="hero-brand" class="intro__brand">EroticX</h2>
+          <p id="hero-line" class="intro__text">Une vitrine adulte plus éditoriale, plus désir.</p>
         </section>
 
         <section id="wall" class="wall">
           <div class="wall__head">
             <h3>Sélection</h3>
-            <p>Cartes compactes · finition premium</p>
+            <span class="wall__chip">Premium look</span>
           </div>
           <div id="grid" class="wall__list"></div>
           <p id="empty" class="empty" hidden>Aucune vidéo.</p>
         </section>
 
         <footer class="foot">
-          <span>Démo DA nightlife · iPhone / Android / PC</span>
-          <a href="/">Retour ancien site</a>
+          <a href="/">← Ancien site</a>
+          <span>Démo visuelle · iPhone / Android / PC</span>
         </footer>
-      </div>
+      </main>
     </div>
 
-    <script src="/demo.js?v=nightlife6"></script>
+    <script src="/demo.js?v=luxe7"></script>
   </body>
 </html>

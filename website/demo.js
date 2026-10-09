@@ -92,9 +92,13 @@
       "Private cut",
     ];
 
+    const tones = ["a", "b", "c"];
+
     if (!videos.length) {
       names.forEach((title, i) => {
-        els.grid.appendChild(shot(title, i * 811, "Aperçu démo éditorial", "Featured"));
+        els.grid.appendChild(
+          shot(title, i * 811, "Éditorial", i === 0 ? "Tonight" : "Cut", tones[i % 3])
+        );
       });
       if (els.empty) els.empty.hidden = true;
       return;
@@ -103,12 +107,20 @@
     if (els.empty) els.empty.hidden = true;
     videos.forEach((v, i) => {
       els.grid.appendChild(
-        shot(v.title || "Sans titre", v.createdAt || i, "Contenu membre", i === 0 ? "Tonight" : "Cut")
+        shot(
+          v.title || "Sans titre",
+          v.createdAt || i,
+          "Membre",
+          i === 0 ? "Tonight" : "New",
+          tones[i % 3]
+        )
       );
     });
 
     for (let i = videos.length; i < 6; i += 1) {
-      els.grid.appendChild(shot(names[i % names.length], i * 701, "Aperçu démo", "Demo"));
+      els.grid.appendChild(
+        shot(names[i % names.length], i * 701, "Demo", "Cut", tones[i % 3])
+      );
     }
   }
 

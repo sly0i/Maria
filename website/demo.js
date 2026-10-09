@@ -1,229 +1,159 @@
 (() => {
+  const NEW_MS = 24 * 60 * 60 * 1000;
+
   const els = {
     gate: document.getElementById("gate"),
-    shell: document.getElementById("shell"),
+    app: document.getElementById("app"),
     gateEnter: document.getElementById("gate-enter"),
     gateLeave: document.getElementById("gate-leave"),
     gateLogo: document.getElementById("gate-logo"),
     gateBrand: document.getElementById("gate-brand"),
-    topLogo: document.getElementById("top-logo"),
-    topName: document.getElementById("top-name"),
-    heroBrand: document.getElementById("hero-brand"),
-    heroLine: document.getElementById("hero-line"),
-    videoGrid: document.getElementById("video-grid"),
-    videoEmpty: document.getElementById("video-empty"),
-    adStage: document.getElementById("ad-stage"),
-    adEmpty: document.getElementById("ad-empty"),
-    adDots: document.getElementById("ad-dots"),
+    navLogo: document.getElementById("nav-logo"),
+    navName: document.getElementById("nav-name"),
+    siteDesc: document.getElementById("site-desc"),
+    grid: document.getElementById("grid"),
+    empty: document.getElementById("empty"),
   };
 
-  let adTimer = null;
-  let adIndex = 0;
+  let allVideos = [];
+  let filter = "all";
 
   function applyBrand(cfg) {
     const name = cfg.brandName || "EroticX";
-    const logo = cfg.logoPath || "/assets/logo.svg";
+    const logo = `${cfg.logoPath || "/assets/logo.svg"}?t=${Date.now()}`;
     const desc = cfg.description || "Regarde les dernières publications";
-    document.title = `Démo esthétique — ${name}`;
-    [els.gateBrand, els.topName, els.heroBrand].forEach((n) => {
-      if (n) n.textContent = name;
-    });
-    [els.gateLogo, els.topLogo].forEach((img) => {
+    document.title = `Démo — ${name}`;
+    if (els.gateBrand) els.gateBrand.textContent = name;
+    if (els.navName) els.navName.textContent = name;
+    if (els.siteDesc) els.siteDesc.textContent = desc;
+    [els.gateLogo, els.navLogo].forEach((img) => {
       if (!img) return;
-      img.src = `${logo}?t=${Date.now()}`;
-      img.alt = `Logo ${name}`;
+      img.src = logo;
+      img.alt = name;
     });
-    if (els.heroLine) els.heroLine.textContent = desc;
   }
 
-  function renderVideos(videos) {
-    if (!els.videoGrid) return;
-    els.videoGrid.innerHTML = "";
-    if (!videos.length) {
-      if (els.videoEmpty) els.videoEmpty.hidden = false;
+  function isNew(video) {
+    const t = Number(video.createdAt) || 0;
+    return t > 0 && Date.now() - t < NEW_MS;
+  }
+
+  function filtered() {
+    if (filter === "new") return allVideos.filter(isNew);
+    return allVideos;
+  }
+
+  function durationLabel(seed) {
+    const n = Number(seed) || 0;
+    const mins = String((n % 17) + 4).padStart(2, "0");
+    const secs = String((n % 50) + 10).padStart(2, "0");
+    return `${mins}:${secs}`;
+  }
+
+  function makeCard(title, seed, meta) {
+    const a = document.createElement("a");
+    a.className = "card";
+    a.href = "#";
+    a.setAttribute("aria-label", title);
+    a.innerHTML = `
+      <div class="card__thumb">
+        <span class="card__play" aria-hidden="true"></span>
+        <span class="card__hd">HD</span>
+        <span class="card__time"></span>
+      </div>
+      <h3 class="card__title"></h3>
+      <p class="card__meta"></p>
+    `;
+    a.querySelector(".card__time").textContent = durationLabel(seed);
+    a.querySelector(".card__title").textContent = title;
+    a.querySelector(".card__meta").textContent = meta;
+    a.addEventListener("click", (e) => e.preventDefault());
+    return a;
+  }
+
+  function render() {
+    if (!els.grid) return;
+    els.grid.innerHTML = "";
+    const videos = filtered();
+
+    if (!videos.length && filter === "new") {
+      if (els.empty) {
+        els.empty.hidden = false;
+        els.empty.textContent = "Aucune nouvelle vidéo (24 h).";
+      }
       return;
     }
-    if (els.videoEmpty) els.videoEmpty.hidden = true;
 
-    videos.forEach((video, i) => {
-      const a = document.createElement("a");
-      a.className = "vcard";
-      a.href = video.watchUrl || `/watch/${video.id}`;
-      a.setAttribute("aria-label", video.title || "Vidéo");
-      const mins = String(((Number(video.createdAt) || i * 97) % 17) + 4).padStart(2, "0");
-      const secs = String(((Number(video.createdAt) || i * 53) % 50) + 10).padStart(2, "0");
-      a.innerHTML = `
-        <div class="vcard__thumb">
-          <span class="vcard__play" aria-hidden="true"></span>
-          <span class="vcard__hd">HD</span>
-          <span class="vcard__time">${mins}:${secs}</span>
-        </div>
-        <h3 class="vcard__title"></h3>
-        <p class="vcard__meta">Membre · 4K ready</p>
-      `;
-      a.querySelector(".vcard__title").textContent = video.title || "Sans titre";
-      a.addEventListener("click", (e) => {
-        e.preventDefault();
-      });
-      els.videoGrid.appendChild(a);
+    if (els.empty) els.empty.hidden = true;
+
+    videos.forEach((video) => {
+      els.grid.appendChild(
+        makeCard(video.title || "Vidéo", video.createdAt, filter === "new" ? "Nouveau" : "HD · 1080p")
+      );
     });
 
-    // Fill demo grid if few real videos so the aesthetic reads well
-    if (videos.length < 8) {
-      const fillers = [
-        "After hours",
-        "Velvet room",
-        "Night drive",
-        "Soft focus",
+    // Fill so the demo looks dense on every device
+    if (filter === "all" && videos.length < 10) {
+      const names = [
+        "Night session",
         "Private cut",
-        "Red hour",
-        "Silent film",
-        "Heatwave",
+        "After dark",
+        "Raw take",
+        "Close up",
+        "Hotel room",
+        "Weekend",
+        "Soft light",
+        "First time",
+        "Late call",
       ];
-      for (let i = videos.length; i < 8; i += 1) {
-        const a = document.createElement("a");
-        a.className = "vcard";
-        a.href = "#videos";
-        a.innerHTML = `
-          <div class="vcard__thumb">
-            <span class="vcard__play" aria-hidden="true"></span>
-            <span class="vcard__hd">HD</span>
-            <span class="vcard__time">12:0${i % 9}</span>
-          </div>
-          <h3 class="vcard__title"></h3>
-          <p class="vcard__meta">Aperçu démo · placeholder</p>
-        `;
-        a.querySelector(".vcard__title").textContent = fillers[i % fillers.length];
-        a.addEventListener("click", (e) => e.preventDefault());
-        els.videoGrid.appendChild(a);
+      for (let i = videos.length; i < 10; i += 1) {
+        els.grid.appendChild(makeCard(names[i % names.length], i * 911, "Aperçu démo"));
       }
-    }
-  }
-
-  function showAd(index) {
-    const slides = els.adStage?.querySelectorAll(".ad-slide");
-    if (!slides?.length) return;
-    adIndex = ((index % slides.length) + slides.length) % slides.length;
-    slides.forEach((s, i) => s.classList.toggle("is-active", i === adIndex));
-    els.adDots?.querySelectorAll("button").forEach((d, i) => {
-      d.classList.toggle("is-active", i === adIndex);
-    });
-  }
-
-  function renderAds(ads) {
-    if (!els.adStage) return;
-    if (adTimer) clearInterval(adTimer);
-    els.adStage.innerHTML = "";
-    if (els.adDots) {
-      els.adDots.innerHTML = "";
-      els.adDots.hidden = true;
-    }
-
-    if (!ads.length) {
-      els.adStage.hidden = true;
-      if (els.adEmpty) els.adEmpty.hidden = false;
-      return;
-    }
-
-    if (els.adEmpty) els.adEmpty.hidden = true;
-    els.adStage.hidden = false;
-
-    ads.forEach((ad, index) => {
-      const link = document.createElement("a");
-      link.className = "ad-slide" + (index === 0 ? " is-active" : "");
-      link.href = ad.redirectUrl || "#";
-      link.target = "_blank";
-      link.rel = "noopener noreferrer";
-
-      if (ad.mediaType === "video") {
-        const video = document.createElement("video");
-        video.muted = true;
-        video.loop = true;
-        video.playsInline = true;
-        video.autoplay = true;
-        video.src = ad.url;
-        link.appendChild(video);
-      } else {
-        const img = document.createElement("img");
-        img.src = ad.url;
-        img.alt = "";
-        link.appendChild(img);
-      }
-
-      const shade = document.createElement("span");
-      shade.className = "ad-slide__shade";
-      link.appendChild(shade);
-
-      const meta = document.createElement("span");
-      meta.className = "ad-slide__meta";
-      const title = document.createElement("strong");
-      title.textContent = ad.title || "Sponsor";
-      const cta = document.createElement("span");
-      cta.textContent = "Découvrir ➔";
-      meta.appendChild(title);
-      meta.appendChild(cta);
-      link.appendChild(meta);
-      els.adStage.appendChild(link);
-    });
-
-    if (ads.length > 1 && els.adDots) {
-      els.adDots.hidden = false;
-      ads.forEach((_, index) => {
-        const dot = document.createElement("button");
-        dot.type = "button";
-        dot.className = index === 0 ? "is-active" : "";
-        dot.setAttribute("aria-label", `Pub ${index + 1}`);
-        dot.addEventListener("click", () => {
-          showAd(index);
-          if (adTimer) clearInterval(adTimer);
-          adTimer = setInterval(() => showAd(adIndex + 1), 5000);
-        });
-        els.adDots.appendChild(dot);
-      });
-      adTimer = setInterval(() => showAd(adIndex + 1), 5000);
     }
   }
 
   async function boot() {
     try {
-      const [cfgRes, vidRes, adsRes] = await Promise.all([
-        fetch("/api/config"),
-        fetch("/api/videos"),
-        fetch("/api/ads"),
-      ]);
+      const [cfgRes, vidRes] = await Promise.all([fetch("/api/config"), fetch("/api/videos")]);
       if (cfgRes.ok) applyBrand(await cfgRes.json());
       if (vidRes.ok) {
         const data = await vidRes.json();
-        renderVideos(data.videos || []);
-      } else {
-        renderVideos([]);
-      }
-      if (adsRes.ok) {
-        const data = await adsRes.json();
-        renderAds(data.ads || []);
-      } else {
-        renderAds([]);
+        allVideos = data.videos || [];
       }
     } catch {
       applyBrand({});
-      renderVideos([]);
-      renderAds([]);
+      allVideos = [];
     }
+    render();
   }
 
-  els.gateEnter?.addEventListener("click", () => {
+  function enter() {
     if (els.gate) els.gate.hidden = true;
-    if (els.shell) els.shell.hidden = false;
-  });
+    if (els.app) els.app.hidden = false;
+    // iOS: force a reflow so sticky/nav paints correctly after unlock
+    requestAnimationFrame(() => {
+      window.scrollTo(0, 0);
+    });
+  }
 
+  els.gateEnter?.addEventListener("click", enter);
   els.gateLeave?.addEventListener("click", () => {
-    location.href = "https://www.google.com";
+    window.location.href = "https://www.google.com";
   });
 
-  document.querySelectorAll(".chip").forEach((chip) => {
-    chip.addEventListener("click", () => {
-      document.querySelectorAll(".chip").forEach((c) => c.classList.remove("is-active"));
-      chip.classList.add("is-active");
+  document.querySelectorAll(".cats__item").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      document.querySelectorAll(".cats__item").forEach((b) => b.classList.remove("is-on"));
+      btn.classList.add("is-on");
+      filter = btn.dataset.filter === "new" ? "new" : "all";
+      render();
+    });
+  });
+
+  document.querySelectorAll(".tabs__btn").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      document.querySelectorAll(".tabs__btn").forEach((b) => b.classList.remove("is-on"));
+      btn.classList.add("is-on");
     });
   });
 

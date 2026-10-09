@@ -309,6 +309,118 @@ a {
   min-width: 9rem;
 }
 
+.billboard {
+  padding: 0.25rem 1rem 1.4rem;
+}
+
+.billboard__frame {
+  position: relative;
+  border-radius: 22px;
+  overflow: hidden;
+  border: 1px solid var(--line);
+  background: var(--bg-elev);
+}
+
+.billboard__stage {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 16 / 7;
+  max-height: 240px;
+  min-height: 150px;
+}
+
+.billboard__slide {
+  position: absolute;
+  inset: 0;
+  display: block;
+  text-decoration: none;
+  color: inherit;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.45s ease;
+}
+
+.billboard__slide.is-on {
+  opacity: 1;
+  visibility: visible;
+}
+
+.billboard__slide img,
+.billboard__slide video {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.billboard__shade {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, transparent 35%, rgba(0, 0, 0, 0.78));
+  pointer-events: none;
+}
+
+.billboard__meta {
+  position: absolute;
+  left: 0.9rem;
+  right: 0.9rem;
+  bottom: 1.15rem;
+  z-index: 2;
+}
+
+.billboard__badge {
+  display: inline-block;
+  margin-bottom: 0.35rem;
+  padding: 0.2rem 0.5rem;
+  border-radius: 999px;
+  background: var(--pink-soft);
+  border: 1px solid rgba(255, 45, 106, 0.45);
+  color: #ffb0c4;
+  font-size: 0.65rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.billboard__title {
+  margin: 0 0 0.15rem;
+  font-family: var(--serif);
+  font-size: clamp(1.1rem, 3.5vw, 1.45rem);
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+
+.billboard__cta {
+  margin: 0;
+  color: var(--pink);
+  font-size: 0.82rem;
+  font-weight: 750;
+}
+
+.billboard__dots {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0.4rem;
+  z-index: 3;
+  display: flex;
+  justify-content: center;
+  gap: 0.35rem;
+}
+
+.billboard__dots button {
+  width: 0.42rem;
+  height: 0.42rem;
+  border-radius: 999px;
+  padding: 0;
+  background: rgba(255, 255, 255, 0.3);
+}
+
+.billboard__dots button.is-on {
+  width: 1rem;
+  background: #fff;
+}
+
 .wall {
   padding: 0.5rem 1rem 0;
 }
@@ -474,9 +586,15 @@ a {
   }
 
   .wall,
+  .billboard,
   .foot {
     padding-left: 1.5rem;
     padding-right: 1.5rem;
+  }
+
+  .billboard__stage {
+    aspect-ratio: 16 / 5;
+    max-height: 260px;
   }
 }
 

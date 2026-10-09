@@ -15,7 +15,13 @@
     heroLine: document.getElementById("hero-line"),
     grid: document.getElementById("grid"),
     empty: document.getElementById("empty"),
+    adStage: document.getElementById("ad-stage"),
+    adDots: document.getElementById("ad-dots"),
+    adEmpty: document.getElementById("ad-empty"),
   };
+
+  let adTimer = null;
+  let adIndex = 0;
 
   function applyBrand(cfg) {
     const name = cfg.brandName || "EroticX";

@@ -45,24 +45,36 @@
     return `${String((n % 17) + 5).padStart(2, "0")}:${String((n % 50) + 10).padStart(2, "0")}`;
   }
 
-  function shot(title, seed, meta, badge) {
+  function viewsLabel(seed) {
+    const n = Number(seed) || 0;
+    const v = 1200 + (n % 8800);
+    if (v >= 1000) return `${(v / 1000).toFixed(1)}k vues`;
+    return `${v} vues`;
+  }
+
+  function shot(title, seed, meta, badge, tone) {
     const a = document.createElement("a");
-    a.className = "shot";
+    a.className = `shot shot--${tone || "a"}`;
     a.href = "#wall";
     a.innerHTML = `
       <div class="shot__frame">
+        <span class="shot__glow" aria-hidden="true"></span>
+        <span class="shot__veil" aria-hidden="true"></span>
+        <span class="shot__shine" aria-hidden="true"></span>
+        <span class="shot__play" aria-hidden="true"></span>
         <span class="shot__badge"></span>
+        <span class="shot__hd">HD</span>
         <span class="shot__time"></span>
       </div>
-      <div>
+      <div class="shot__body">
         <h4 class="shot__title"></h4>
-        <p class="shot__meta"></p>
+        <p class="shot__meta"><span class="shot__dot" aria-hidden="true"></span><span class="shot__metaText"></span></p>
       </div>
     `;
     a.querySelector(".shot__badge").textContent = badge;
     a.querySelector(".shot__time").textContent = timeLabel(seed);
     a.querySelector(".shot__title").textContent = title;
-    a.querySelector(".shot__meta").textContent = meta;
+    a.querySelector(".shot__metaText").textContent = `${meta} · ${viewsLabel(seed)}`;
     a.addEventListener("click", (e) => e.preventDefault());
     return a;
   }

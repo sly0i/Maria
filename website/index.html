@@ -73,6 +73,10 @@
                 required
               />
             </label>
+            <p class="auth-hint">
+              Si tu viens de créer un compte : attends le SMS (~5 min) pour obtenir ton code, valide-le, puis
+              attends qu’un admin valide ton inscription avant de pouvoir te connecter aux vidéos.
+            </p>
             <button type="submit" class="btn btn--confirm">Se connecter</button>
             <button type="button" id="login-back" class="btn btn--deny">Retour</button>
             <p id="login-error" class="auth-error" hidden></p>
@@ -90,6 +94,10 @@
               Numéro
               <input type="tel" id="register-phone" name="phone" autocomplete="tel" required />
             </label>
+            <p class="auth-hint">
+              Après avoir inscrit ton numéro, tu recevras un code à 4 chiffres par SMS sous environ 5 minutes.
+              Attends bien de le recevoir avant de continuer.
+            </p>
             <button type="submit" id="register-submit" class="btn btn--confirm">Continuer</button>
             <p id="register-error" class="auth-error" hidden></p>
           </form>
@@ -109,16 +117,17 @@
               />
             </label>
             <p class="auth-hint">
-              Inscris le code à 4 chiffres que tu vas recevoir par SMS, puis appuie sur « Valider mon code ».
-              Ensuite, patiente environ 5 minutes qu’un admin valide ton inscription.
+              Attends de recevoir le code à 4 chiffres par SMS (environ 5 minutes), inscris-le ici, puis appuie
+              sur « Valider mon code ». Ensuite, un admin validera ton inscription (compte environ 5 minutes
+              aussi).
             </p>
             <button type="submit" class="btn btn--confirm">Valider mon code</button>
             <p id="code-error" class="auth-error" hidden></p>
           </form>
 
           <p id="register-pending" class="auth-pending" hidden>
-            Code validé. Ta demande est envoyée : patiente qu’un admin accepte ton compte pour accéder aux
-            vidéos.
+            Code validé. Ta demande est envoyée : patiente environ 5 minutes qu’un admin valide ton inscription
+            pour accéder aux vidéos.
           </p>
           <p class="auth-safe">
             C’est sécurisé et à but simplement pour te créer un compte. Tes infos ne servent qu’à

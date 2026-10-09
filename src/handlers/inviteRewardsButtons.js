@@ -20,7 +20,7 @@ export const inviteRewardsClaimHandler = {
     try {
       if (!interaction.inGuild()) {
         return InteractionHelper.safeReply(interaction, {
-          embeds: [errorEmbed('Serveur uniquement', 'Utilise ce bouton sur un serveur.')],
+          embeds: [errorEmbed('Server only', 'Use this button in a server.')],
           flags: MessageFlags.Ephemeral,
         });
       }
@@ -28,7 +28,7 @@ export const inviteRewardsClaimHandler = {
       const config = await getInviteRewardsConfig(client, interaction.guildId);
       if (!config.enabled) {
         return InteractionHelper.safeReply(interaction, {
-          embeds: [errorEmbed('Désactivé', 'Le système de récompenses est désactivé.')],
+          embeds: [errorEmbed('Disabled', 'The rewards system is currently disabled.')],
           flags: MessageFlags.Ephemeral,
         });
       }
@@ -44,11 +44,11 @@ export const inviteRewardsClaimHandler = {
           .sort((a, b) => a.invites - b.invites)[0];
 
         const detail = nextReward
-          ? `Il te faut **${nextReward.invites}** invites valides pour **${nextReward.label}** (tu en as **${validInvites}**).`
-          : `Tu as **${validInvites}** invites valides et aucune récompense disponible.`;
+          ? `You need **${nextReward.invites}** valid invites for **${nextReward.label}** (you have **${validInvites}**).`
+          : `You have **${validInvites}** valid invites and no rewards available.`;
 
         return InteractionHelper.safeReply(interaction, {
-          embeds: [errorEmbed('Rien à réclamer', detail)],
+          embeds: [errorEmbed('Nothing to claim', detail)],
           flags: MessageFlags.Ephemeral,
         });
       }
@@ -56,8 +56,8 @@ export const inviteRewardsClaimHandler = {
       return InteractionHelper.safeReply(interaction, {
         embeds: [
           createEmbed({
-            title: '🎁 Réclamer une récompense',
-            description: `Tu as **${validInvites}** invites valides.\nChoisis une récompense ci-dessous :`,
+            title: '🎁 Claim a reward',
+            description: `You have **${validInvites}** valid invites.\nChoose a reward below:`,
             color: 'primary',
           }),
         ],
@@ -67,7 +67,7 @@ export const inviteRewardsClaimHandler = {
     } catch (error) {
       logger.error('Error in invite rewards claim button:', error);
       return InteractionHelper.safeReply(interaction, {
-        embeds: [errorEmbed('Erreur', 'Impossible de charger tes récompenses pour le moment.')],
+        embeds: [errorEmbed('Error', 'Could not load your rewards right now.')],
         flags: MessageFlags.Ephemeral,
       });
     }
@@ -80,7 +80,7 @@ export const inviteRewardsSelectHandler = {
     try {
       if (!interaction.inGuild()) {
         return InteractionHelper.safeReply(interaction, {
-          embeds: [errorEmbed('Serveur uniquement', 'Utilise ce menu sur un serveur.')],
+          embeds: [errorEmbed('Server only', 'Use this menu in a server.')],
           flags: MessageFlags.Ephemeral,
         });
       }
@@ -90,12 +90,12 @@ export const inviteRewardsSelectHandler = {
 
       if (!result.ok) {
         const messages = {
-          unknown_reward: 'Cette récompense n’existe plus.',
-          not_enough_invites: `Pas assez d’invites (tu as ${result.validInvites}, il en faut ${result.required}).`,
-          already_claimed: 'Tu as déjà réclamé cette récompense.',
+          unknown_reward: 'That reward no longer exists.',
+          not_enough_invites: `Not enough invites (you have ${result.validInvites}, need ${result.required}).`,
+          already_claimed: 'You already claimed this reward.',
         };
         return InteractionHelper.safeReply(interaction, {
-          embeds: [errorEmbed('Claim refusé', messages[result.reason] || 'Impossible de réclamer.')],
+          embeds: [errorEmbed('Claim denied', messages[result.reason] || 'Unable to claim.')],
           flags: MessageFlags.Ephemeral,
           components: [],
         });
@@ -108,22 +108,22 @@ export const inviteRewardsSelectHandler = {
         if (staffChannel?.isTextBased?.()) {
           const staffEmbed = new EmbedBuilder()
             .setColor(0x57f287)
-            .setTitle('🎁 Nouvelle demande de récompense')
+            .setTitle('🎁 New reward claim')
             .setDescription(
               [
-                `**Membre :** ${interaction.user} (\`${interaction.user.id}\`)`,
-                `**Récompense :** ${reward.emoji || ''} **${reward.label}**`,
-                `**Invites valides :** ${validInvites}`,
-                `**Catégorie :** ${reward.category}`,
+                `**Member:** ${interaction.user} (\`${interaction.user.id}\`)`,
+                `**Reward:** ${reward.emoji || ''} **${reward.label}**`,
+                `**Valid invites:** ${validInvites}`,
+                `**Category:** ${reward.category}`,
                 '',
-                'Un staff doit envoyer manuellement le Nitro gift / Robux au membre.',
+                'A staff member should manually send the Nitro gift / Robux to the member.',
               ].join('\n')
             )
             .setTimestamp()
             .setFooter({ text: 'Invite Rewards' });
 
           await staffChannel.send({
-            content: 'Nouvelle réclamation invites',
+            content: 'New invite reward claim',
             embeds: [staffEmbed],
           });
         }
@@ -132,13 +132,13 @@ export const inviteRewardsSelectHandler = {
       return InteractionHelper.safeReply(interaction, {
         embeds: [
           successEmbed(
-            'Récompense réclamée',
+            'Reward claimed',
             [
-              `Tu as réclamé **${reward.label}** ${reward.emoji || ''}`.trim(),
+              `You claimed **${reward.label}** ${reward.emoji || ''}`.trim(),
               '',
               config.staffChannelId
-                ? 'Le staff a été notifié et te contactera pour te livrer la récompense.'
-                : 'Le staff n’a pas encore de salon de notification — contacte un admin.',
+                ? 'Staff has been notified and will contact you to deliver the reward.'
+                : 'No staff notification channel is set yet — contact an admin.',
             ].join('\n')
           ),
         ],
@@ -148,7 +148,7 @@ export const inviteRewardsSelectHandler = {
     } catch (error) {
       logger.error('Error in invite rewards select menu:', error);
       return InteractionHelper.safeReply(interaction, {
-        embeds: [errorEmbed('Erreur', 'Impossible de finaliser ta réclamation.')],
+        embeds: [errorEmbed('Error', 'Could not finish your claim.')],
         flags: MessageFlags.Ephemeral,
         components: [],
       });

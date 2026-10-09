@@ -16,13 +16,13 @@ export const INVITE_REWARDS_CLAIM_BUTTON = 'invite_rewards_claim';
 export const INVITE_REWARDS_SELECT = 'invite_rewards_select';
 
 export const DEFAULT_REWARDS = [
-  { id: 'nitro_basic_1m', invites: 3, label: 'Discord Nitro Basic (1 mois)', emoji: '💎', category: 'nitro' },
-  { id: 'nitro_boost_1m', invites: 6, label: 'Discord Nitro Boost (1 mois)', emoji: '💎', category: 'nitro' },
-  { id: 'nitro_basic_1y', invites: 9, label: 'Discord Nitro Basic (1 an)', emoji: '💎', category: 'nitro' },
-  { id: 'nitro_boost_1y', invites: 12, label: 'Discord Nitro Boost (1 an)', emoji: '💎', category: 'nitro' },
+  { id: 'nitro_basic_1m', invites: 3, label: 'Discord Nitro Basic (1 month)', emoji: '💎', category: 'nitro' },
+  { id: 'nitro_boost_1m', invites: 6, label: 'Discord Nitro Boost (1 month)', emoji: '💎', category: 'nitro' },
+  { id: 'nitro_basic_1y', invites: 9, label: 'Discord Nitro Basic (1 year)', emoji: '💎', category: 'nitro' },
+  { id: 'nitro_boost_1y', invites: 12, label: 'Discord Nitro Boost (1 year)', emoji: '💎', category: 'nitro' },
   { id: 'robux_450', invites: 3, label: '450 Robux', emoji: '🪙', category: 'robux' },
-  { id: 'robux_1500', invites: 6, label: '1.500 Robux', emoji: '🪙', category: 'robux' },
-  { id: 'robux_4500', invites: 9, label: '4.500 Robux', emoji: '🪙', category: 'robux' },
+  { id: 'robux_1500', invites: 6, label: '1,500 Robux', emoji: '🪙', category: 'robux' },
+  { id: 'robux_4500', invites: 9, label: '4,500 Robux', emoji: '🪙', category: 'robux' },
 ];
 
 const DEFAULT_MIN_ACCOUNT_AGE_DAYS = 7;
@@ -345,28 +345,28 @@ export function buildRewardsPanelEmbed(config, options = {}) {
 
   const divider = '▬▬▬▬▬▬▬▬▬▬';
   const notices = config.notices || [
-    '📌 Inviter des comptes secondaires ou bots = **ban**',
-    '📌 Ne pas respecter les CGU Discord = exclusion de l’event',
-    '📌 Les invites valides = joins − leaves − fakes (comptes trop récents)',
+    '📌 Inviting alt accounts or bots = **ban**',
+    '📌 Breaking Discord Terms of Service = exclusion from the event',
+    '📌 Valid invites = joins − leaves − fakes (too-new accounts)',
   ];
 
   const description = [
-    'Invitez des membres et **réclamez vos récompenses** maintenant !',
+    'Invite members and **claim your rewards** now!',
     divider,
     sections.join(`\n${divider}\n`),
     divider,
     '**NOTICES**',
     ...notices,
     '',
-    '**PRÊT À RÉCLAMER ?**',
-    'Cliquez sur le bouton ci-dessous une fois le nombre d’invites atteint.',
+    '**READY TO CLAIM?**',
+    'Click the button below once you reach the required invite count.',
   ].join('\n');
 
   const embed = new EmbedBuilder()
     .setColor(getColor('primary') || 0x5865f2)
     .setDescription(description)
     .setFooter({
-      text: `Système de récompenses | ${options.timestampLabel || new Date().toLocaleString('fr-FR')}`,
+      text: `Rewards system | ${options.timestampLabel || new Date().toLocaleString('en-US')}`,
     });
 
   return embed;
@@ -376,7 +376,7 @@ export function buildClaimButtonRow() {
   return new ActionRowBuilder().addComponents(
     new ButtonBuilder()
       .setCustomId(INVITE_REWARDS_CLAIM_BUTTON)
-      .setLabel('Réclamer')
+      .setLabel('Claim')
       .setEmoji('🎁')
       .setStyle(ButtonStyle.Primary)
   );
@@ -385,11 +385,11 @@ export function buildClaimButtonRow() {
 export function buildRewardSelectRow(claimableRewards) {
   const menu = new StringSelectMenuBuilder()
     .setCustomId(INVITE_REWARDS_SELECT)
-    .setPlaceholder('Choisis ta récompense')
+    .setPlaceholder('Choose your reward')
     .addOptions(
       claimableRewards.slice(0, 25).map((reward) => ({
         label: reward.label.slice(0, 100),
-        description: `${reward.invites} invites requises`.slice(0, 100),
+        description: `${reward.invites} invites required`.slice(0, 100),
         value: reward.id,
         emoji: reward.emoji || undefined,
       }))

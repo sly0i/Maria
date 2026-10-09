@@ -22,16 +22,16 @@ import {
 export default {
   data: new SlashCommandBuilder()
     .setName('inviterewards')
-    .setDescription('Système de récompenses d’invites (Nitro / Robux)')
+    .setDescription('Invite rewards system (Nitro / Robux)')
     .setDefaultMemberPermissions(PermissionFlagsBits.ManageGuild)
     .addSubcommand((subcommand) =>
       subcommand
         .setName('panel')
-        .setDescription('Poster le panel de récompenses avec le bouton Réclamer')
+        .setDescription('Post the rewards panel with the Claim button')
         .addChannelOption((option) =>
           option
             .setName('channel')
-            .setDescription('Salon où poster le panel (défaut: salon actuel)')
+            .setDescription('Channel to post the panel in (defaults to current)')
             .addChannelTypes(ChannelType.GuildText)
             .setRequired(false)
         )
@@ -39,11 +39,11 @@ export default {
     .addSubcommand((subcommand) =>
       subcommand
         .setName('staff')
-        .setDescription('Définir le salon staff pour les demandes de récompense')
+        .setDescription('Set the staff channel for reward claim alerts')
         .addChannelOption((option) =>
           option
             .setName('channel')
-            .setDescription('Salon staff qui recevra les claims')
+            .setDescription('Staff channel that will receive claims')
             .addChannelTypes(ChannelType.GuildText)
             .setRequired(true)
         )
@@ -51,11 +51,11 @@ export default {
     .addSubcommand((subcommand) =>
       subcommand
         .setName('leaderboard')
-        .setDescription('Voir le classement des invites')
+        .setDescription('Show the invite leaderboard')
         .addIntegerOption((option) =>
           option
             .setName('limit')
-            .setDescription('Nombre de places (max 25)')
+            .setDescription('Number of places (max 25)')
             .setMinValue(3)
             .setMaxValue(25)
             .setRequired(false)
@@ -64,37 +64,37 @@ export default {
     .addSubcommand((subcommand) =>
       subcommand
         .setName('check')
-        .setDescription('Vérifier les invites d’un membre')
+        .setDescription('Check a member’s invites')
         .addUserOption((option) =>
-          option.setName('user').setDescription('Membre à vérifier').setRequired(true)
+          option.setName('user').setDescription('Member to check').setRequired(true)
         )
     )
     .addSubcommand((subcommand) =>
       subcommand
         .setName('reset')
-        .setDescription('Reset les invites / claims d’un membre')
+        .setDescription('Reset a member’s invites / claims')
         .addUserOption((option) =>
-          option.setName('user').setDescription('Membre à reset').setRequired(true)
+          option.setName('user').setDescription('Member to reset').setRequired(true)
         )
     )
     .addSubcommand((subcommand) =>
       subcommand
         .setName('config')
-        .setDescription('Voir la config actuelle des récompenses')
+        .setDescription('View the current rewards config')
     ),
 
   async execute(interaction) {
     try {
       if (!interaction.inGuild()) {
         return InteractionHelper.safeReply(interaction, {
-          embeds: [errorEmbed('Serveur uniquement', 'Cette commande marche seulement sur un serveur.')],
+          embeds: [errorEmbed('Server only', 'This command can only be used in a server.')],
           flags: MessageFlags.Ephemeral,
         });
       }
 
       if (!interaction.memberPermissions?.has(PermissionFlagsBits.ManageGuild)) {
         return InteractionHelper.safeReply(interaction, {
-          embeds: [errorEmbed('Permission', 'Il te faut la permission Gérer le serveur.')],
+          embeds: [errorEmbed('Permission', 'You need the Manage Server permission.')],
           flags: MessageFlags.Ephemeral,
         });
       }
@@ -107,7 +107,7 @@ export default {
         const channel = interaction.options.getChannel('channel') || interaction.channel;
         if (!channel?.isTextBased?.()) {
           return InteractionHelper.safeReply(interaction, {
-            embeds: [errorEmbed('Salon invalide', 'Choisis un salon texte.')],
+            embeds: [errorEmbed('Invalid channel', 'Choose a text channel.')],
             flags: MessageFlags.Ephemeral,
           });
         }
@@ -125,7 +125,7 @@ export default {
         await saveInviteRewardsConfig(client, guildId, config);
 
         return InteractionHelper.safeReply(interaction, {
-          embeds: [successEmbed('Panel posté', `Panel de récompenses envoyé dans ${channel}.`)],
+          embeds: [successEmbed('Panel posted', `Rewards panel sent in ${channel}.`)],
           flags: MessageFlags.Ephemeral,
         });
       }
@@ -139,8 +139,8 @@ export default {
         return InteractionHelper.safeReply(interaction, {
           embeds: [
             successEmbed(
-              'Salon staff défini',
-              `Les demandes de récompense seront envoyées dans ${channel}.`
+              'Staff channel set',
+              `Reward claim requests will be sent to ${channel}.`
             ),
           ],
           flags: MessageFlags.Ephemeral,
@@ -153,20 +153,20 @@ export default {
 
         if (!rows.length) {
           return InteractionHelper.safeReply(interaction, {
-            embeds: [errorEmbed('Aucune donnée', 'Personne n’a encore d’invites trackées.')],
+            embeds: [errorEmbed('No data', 'Nobody has tracked invites yet.')],
             flags: MessageFlags.Ephemeral,
           });
         }
 
         const lines = rows.map((row, index) => {
           const medal = index === 0 ? '🥇' : index === 1 ? '🥈' : index === 2 ? '🥉' : `**${index + 1}.**`;
-          return `${medal} <@${row.userId}> — **${row.valid}** valides (📥 ${row.joins} / 📤 ${row.left} / 🚫 ${row.fake})`;
+          return `${medal} <@${row.userId}> — **${row.valid}** valid (📥 ${row.joins} / 📤 ${row.left} / 🚫 ${row.fake})`;
         });
 
         return InteractionHelper.safeReply(interaction, {
           embeds: [
             createEmbed({
-              title: 'Classement invites',
+              title: 'Invite leaderboard',
               description: lines.join('\n'),
               color: 'primary',
             }),
@@ -184,10 +184,10 @@ export default {
             createEmbed({
               title: `Invites — ${user.username}`,
               description: [
-                `✅ Valides : **${valid}**`,
-                `📥 Joins : **${stats.joins}**`,
-                `📤 Leaves : **${stats.left}**`,
-                `🚫 Fakes : **${stats.fake}**`,
+                `✅ Valid: **${valid}**`,
+                `📥 Joins: **${stats.joins}**`,
+                `📤 Leaves: **${stats.left}**`,
+                `🚫 Fakes: **${stats.fake}**`,
               ].join('\n'),
               color: 'primary',
               thumbnail: user.displayAvatarURL(),
@@ -202,7 +202,7 @@ export default {
         await resetMemberInvites(client, guildId, user.id);
         return InteractionHelper.safeReply(interaction, {
           embeds: [
-            successEmbed('Reset effectué', `Invites et claims de ${user} ont été réinitialisés.`),
+            successEmbed('Reset complete', `${user}'s invites and claims have been reset.`),
           ],
           flags: MessageFlags.Ephemeral,
         });
@@ -217,13 +217,13 @@ export default {
         return InteractionHelper.safeReply(interaction, {
           embeds: [
             createEmbed({
-              title: 'Config Invite Rewards',
+              title: 'Invite Rewards Config',
               description: [
-                `État : **${config.enabled ? 'activé' : 'désactivé'}**`,
-                `Salon staff : ${config.staffChannelId ? `<#${config.staffChannelId}>` : '*non défini*'}`,
-                `Âge mini compte : **${config.minAccountAgeDays} jours**`,
+                `Status: **${config.enabled ? 'enabled' : 'disabled'}**`,
+                `Staff channel: ${config.staffChannelId ? `<#${config.staffChannelId}>` : '*not set*'}`,
+                `Min account age: **${config.minAccountAgeDays} days**`,
                 '',
-                '**Récompenses :**',
+                '**Rewards:**',
                 rewardLines,
               ].join('\n'),
               color: 'primary',
@@ -234,7 +234,7 @@ export default {
       }
 
       return InteractionHelper.safeReply(interaction, {
-        embeds: [errorEmbed('Erreur', 'Sous-commande inconnue.')],
+        embeds: [errorEmbed('Error', 'Unknown subcommand.')],
         flags: MessageFlags.Ephemeral,
       });
     } catch (error) {

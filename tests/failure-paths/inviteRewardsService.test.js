@@ -48,17 +48,17 @@ test('buildRewardsPanelEmbed includes nitro, robux and claim CTA', () => {
   const embed = buildRewardsPanelEmbed({ rewards: DEFAULT_REWARDS }, { timestampLabel: 'test' });
   const description = embed.data.description || '';
 
-  assert.match(description, /Discord Nitro Basic \(1 mois\)/);
+  assert.match(description, /Discord Nitro Basic \(1 month\)/);
   assert.match(description, /450 Robux/);
-  assert.match(description, /PRÊT À RÉCLAMER/);
-  assert.equal(embed.data.footer.text.includes('Système de récompenses'), true);
+  assert.match(description, /READY TO CLAIM/);
+  assert.equal(embed.data.footer.text.includes('Rewards system'), true);
 });
 
-test('buildClaimButtonRow creates Réclamer primary button', () => {
+test('buildClaimButtonRow creates Claim primary button', () => {
   const row = buildClaimButtonRow();
   const button = row.components[0];
   assert.equal(button.data.custom_id, 'invite_rewards_claim');
-  assert.equal(button.data.label, 'Réclamer');
+  assert.equal(button.data.label, 'Claim');
 });
 
 test('claimReward blocks under-threshold and double claim', async () => {

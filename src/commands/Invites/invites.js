@@ -12,11 +12,11 @@ import {
 export default {
   data: new SlashCommandBuilder()
     .setName('invites')
-    .setDescription('Voir le nombre d’invites d’un membre')
+    .setDescription('Check a member’s invite count')
     .addUserOption((option) =>
       option
         .setName('user')
-        .setDescription('Membre à vérifier (toi par défaut)')
+        .setDescription('Member to check (defaults to you)')
         .setRequired(false)
     ),
 
@@ -24,7 +24,7 @@ export default {
     try {
       if (!interaction.inGuild()) {
         return InteractionHelper.safeReply(interaction, {
-          embeds: [errorEmbed('Serveur uniquement', 'Cette commande marche seulement sur un serveur.')],
+          embeds: [errorEmbed('Server only', 'This command can only be used in a server.')],
           flags: MessageFlags.Ephemeral,
         });
       }
@@ -40,18 +40,18 @@ export default {
         .sort((a, b) => a.invites - b.invites)[0];
 
       const embed = createEmbed({
-        title: `Invites de ${target.username}`,
+        title: `${target.username}'s Invites`,
         description: [
-          `✅ **Valides :** ${valid}`,
-          `📥 **Joins :** ${stats.joins}`,
-          `📤 **Leaves :** ${stats.left}`,
-          `🚫 **Fakes :** ${stats.fake}`,
+          `✅ **Valid:** ${valid}`,
+          `📥 **Joins:** ${stats.joins}`,
+          `📤 **Leaves:** ${stats.left}`,
+          `🚫 **Fakes:** ${stats.fake}`,
           claims.claimedRewardIds.length
-            ? `🎁 **Récompenses réclamées :** ${claims.claimedRewardIds.length}`
-            : '🎁 **Récompenses réclamées :** aucune',
+            ? `🎁 **Rewards claimed:** ${claims.claimedRewardIds.length}`
+            : '🎁 **Rewards claimed:** none',
           nextReward
-            ? `🎯 **Prochaine récompense :** ${nextReward.label} (${nextReward.invites - valid} invites restantes)`
-            : '🎯 **Prochaine récompense :** tu as atteint tous les paliers disponibles',
+            ? `🎯 **Next reward:** ${nextReward.label} (${nextReward.invites - valid} invites left)`
+            : '🎯 **Next reward:** you have reached every available tier',
         ].join('\n'),
         color: 'primary',
         thumbnail: target.displayAvatarURL(),

@@ -150,8 +150,19 @@
 
   function gridColumnCount() {
     if (!els.videoList) return 2;
-    const cols = getComputedStyle(els.videoList).gridTemplateColumns.split(/\s+/).filter(Boolean);
-    return Math.max(1, cols.length);
+    const raw = getComputedStyle(els.videoList).gridTemplateColumns || "";
+    const repeat = raw.match(/repeat\(\s*(\d+)/i);
+    if (repeat) return Math.max(1, Number(repeat[1]));
+    const parts = raw
+      .split(/\s+/)
+      .filter((token) => token && !token.startsWith("[") && token !== "/");
+    if (parts.length > 1) return parts.length;
+    // Fallback aligned with CSS breakpoints
+    const w = els.videoList.clientWidth || window.innerWidth;
+    if (w >= 1200) return 5;
+    if (w >= 900) return 4;
+    if (w >= 640) return 3;
+    return 2;
   }
 
   function placeAdsInFeed() {

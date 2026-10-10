@@ -482,54 +482,27 @@ a {
   margin: 0 auto;
 }
 
-/* ---------- Promo / ads (dedicated block under videos) ---------- */
+/* ---------- Promo / ads (between intro and gallery) ---------- */
 
 .promo {
-  padding: 1.35rem 1rem 0.4rem;
-  margin-top: 0.5rem;
-  border-top: 1px solid var(--line-soft);
-}
-
-.promo__head {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 0.75rem;
-  margin-bottom: 0.7rem;
-}
-
-.promo__title {
-  margin: 0;
-  font-size: 1.15rem;
-  font-weight: 800;
-  letter-spacing: -0.02em;
-}
-
-.promo__chip {
-  padding: 0.26rem 0.6rem;
-  border-radius: 999px;
-  border: 1px solid rgba(255, 216, 102, 0.35);
-  color: #ffd866;
-  font-size: 0.66rem;
-  font-weight: 700;
-  background: rgba(255, 216, 102, 0.08);
+  padding: 0.35rem 1rem 0.15rem;
 }
 
 .promo__frame {
   position: relative;
-  border-radius: 18px;
+  border-radius: 16px;
   overflow: hidden;
-  border: 1px dashed rgba(255, 216, 102, 0.35);
-  background: linear-gradient(160deg, rgba(40, 24, 12, 0.65), rgba(10, 0, 6, 0.95));
-  box-shadow: 0 14px 36px rgba(0, 0, 0, 0.35);
+  border: 1px solid rgba(255, 111, 160, 0.2);
+  background: var(--night);
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.32);
 }
 
 .promo__stage {
   position: relative;
   width: 100%;
-  aspect-ratio: 16 / 7;
-  max-height: 200px;
-  min-height: 120px;
+  aspect-ratio: 16 / 6;
+  max-height: 168px;
+  min-height: 108px;
 }
 
 .promo__slide {
@@ -572,29 +545,29 @@ a {
 
 .promo__badge {
   display: inline-block;
-  margin-bottom: 0.28rem;
-  padding: 0.16rem 0.48rem;
+  margin-bottom: 0.22rem;
+  padding: 0.14rem 0.42rem;
   border-radius: 999px;
-  background: rgba(255, 216, 102, 0.16);
-  border: 1px solid rgba(255, 216, 102, 0.45);
-  color: #ffe7a8;
-  font-size: 0.6rem;
-  font-weight: 800;
-  letter-spacing: 0.08em;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  color: rgba(255, 240, 243, 0.85);
+  font-size: 0.58rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
   text-transform: uppercase;
 }
 
 .promo__title-ad {
-  margin: 0 0 0.12rem;
-  font-size: clamp(1.05rem, 3.4vw, 1.35rem);
+  margin: 0 0 0.1rem;
+  font-size: clamp(0.98rem, 3.2vw, 1.25rem);
   font-weight: 800;
   letter-spacing: -0.02em;
 }
 
 .promo__cta {
   margin: 0;
-  color: #ffd866;
-  font-size: 0.78rem;
+  color: var(--pink-soft);
+  font-size: 0.76rem;
   font-weight: 700;
 }
 
@@ -619,7 +592,7 @@ a {
 
 .promo__dots button.is-on {
   width: 1rem;
-  background: #ffd866;
+  background: #fff;
 }
 
 /* ---------- Intro ---------- */
@@ -1385,8 +1358,8 @@ a {
   }
 
   .promo__stage {
-    aspect-ratio: 16 / 5;
-    max-height: 220px;
+    aspect-ratio: 21 / 6;
+    max-height: 180px;
   }
 
   .intro__actions {
@@ -1488,17 +1461,18 @@ a {
   }
 
   .promo {
-    padding-top: 1.6rem;
+    padding-top: 0.55rem;
+    padding-bottom: 0.25rem;
   }
 
   .promo__frame {
-    border-radius: 22px;
+    border-radius: 18px;
   }
 
   .promo__stage {
-    aspect-ratio: 21 / 6;
-    max-height: 240px;
-    min-height: 140px;
+    aspect-ratio: 24 / 6;
+    max-height: 190px;
+    min-height: 120px;
   }
 
   .wall {

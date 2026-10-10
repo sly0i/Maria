@@ -309,7 +309,6 @@
       const meta = document.createElement("span");
       meta.className = "promo__meta";
       meta.innerHTML = `
-        <span class="promo__badge">Publicité</span>
         <p class="promo__title-ad"></p>
         <p class="promo__cta">Découvrir ➔</p>
       `;

@@ -169,14 +169,12 @@
     }
 
     const tones = ["a", "b", "c", "d", "e"];
-    const showFeatured = activeFilter === "all" && !searchQuery.trim() && videos.length >= 3;
 
     videos.forEach((video, index) => {
       const tone = tones[index % tones.length];
       const fresh = isNewVideo(video);
-      const featured = showFeatured && index === 0;
       const link = document.createElement("a");
-      link.className = `shot shot--${tone}${featured ? " shot--featured" : ""}`;
+      link.className = `shot shot--${tone}`;
       link.href = video.watchUrl || `/watch/${video.id}`;
       link.setAttribute("aria-label", `Regarder ${video.title || "vidéo"}`);
 
@@ -199,11 +197,7 @@
         </div>
       `;
 
-      link.querySelector(".shot__badge").textContent = featured
-        ? "À la une"
-        : fresh
-          ? "Nouveau"
-          : "Tendance";
+      link.querySelector(".shot__badge").textContent = fresh ? "Nouveau" : "Tendance";
       link.querySelector(".shot__title").textContent = video.title || "Sans titre";
       link.querySelector(".shot__views").textContent = `${viewsLabel(video.createdAt || index)} vues`;
       link.querySelector(".shot__time").textContent = timeLabel(video.createdAt || index);
@@ -243,7 +237,7 @@
   }
 
   function showAdSlide(index) {
-    const slides = els.adsList?.querySelectorAll(".hero__slide");
+    const slides = els.adsList?.querySelectorAll(".promo__slide");
     if (!slides?.length) return;
     adsIndex = ((index % slides.length) + slides.length) % slides.length;
     slides.forEach((slide, i) => {
@@ -284,7 +278,7 @@
 
     ads.forEach((ad, index) => {
       const link = document.createElement("a");
-      link.className = "hero__slide" + (index === 0 ? " is-on" : "");
+      link.className = "promo__slide" + (index === 0 ? " is-on" : "");
       link.href = ad.redirectUrl || "#";
       link.target = "_blank";
       link.rel = "noopener noreferrer";
@@ -308,18 +302,18 @@
       }
 
       const shade = document.createElement("span");
-      shade.className = "hero__shade";
+      shade.className = "promo__shade";
       shade.setAttribute("aria-hidden", "true");
       link.appendChild(shade);
 
       const meta = document.createElement("span");
-      meta.className = "hero__meta";
+      meta.className = "promo__meta";
       meta.innerHTML = `
-        <span class="hero__badge">Pub</span>
-        <p class="hero__title"></p>
-        <p class="hero__cta">Découvrir ➔</p>
+        <span class="promo__badge">Publicité</span>
+        <p class="promo__title-ad"></p>
+        <p class="promo__cta">Découvrir ➔</p>
       `;
-      meta.querySelector(".hero__title").textContent = ad.title || "Sponsor";
+      meta.querySelector(".promo__title-ad").textContent = ad.title || "Sponsor";
       link.appendChild(meta);
 
       link.addEventListener("click", () => trackStat("ad_click"));

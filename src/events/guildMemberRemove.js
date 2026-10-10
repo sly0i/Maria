@@ -157,6 +157,22 @@ export default {
         } catch (error) {
             logger.debug('Error handling leveling data on member leave:', error);
         }
+
+        // Invite rewards: mark invite as left so valid count drops
+        try {
+            const { trackMemberLeaveInvite } = await import('../services/inviteRewardsService.js');
+            const leaveResult = await trackMemberLeaveInvite(member.client, member);
+            if (leaveResult?.inviterId) {
+                logger.debug('Invite leave tracked', {
+                    guildId: guild.id,
+                    memberId: member.id,
+                    inviterId: leaveResult.inviterId,
+                    validInvites: leaveResult.validInvites,
+                });
+            }
+        } catch (error) {
+            logger.debug('Error tracking invite on member leave:', error);
+        }
         
     } catch (error) {
         logger.error('Error in guildMemberRemove event:', error);

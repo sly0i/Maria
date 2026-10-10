@@ -2,6 +2,7 @@ import { Events } from "discord.js";
 import { logger, startupLog } from "../utils/logger.js";
 import config from "../config/application.js";
 import { reconcileReactionRoleMessages } from "../services/reactionRoleService.js";
+import { cacheAllGuildInvites } from "../services/inviteRewardsService.js";
 
 export default {
   name: Events.ClientReady,
@@ -18,6 +19,11 @@ export default {
       const reconciliationSummary = await reconcileReactionRoleMessages(client);
       startupLog(
         `Reaction role reconciliation: scanned ${reconciliationSummary.scannedMessages}, removed ${reconciliationSummary.removedMessages}, errors ${reconciliationSummary.errors}`
+      );
+
+      const inviteCacheSummary = await cacheAllGuildInvites(client);
+      startupLog(
+        `Invite cache warmed: ${inviteCacheSummary.success} guild(s), ${inviteCacheSummary.failed} failed`
       );
     } catch (error) {
       logger.error("Error in ready event:", error);

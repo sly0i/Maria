@@ -37,6 +37,7 @@ const CATEGORY_ICONS = {
     Reaction_Roles: "🎭",
     Community: "👥",
     Birthday: "🎂",
+    Invites: "📩",
     Config: "⚙️",
 };
 
@@ -118,6 +119,11 @@ export async function createInitialHelpMenu(client) {
         {
             name: "🎂 **Birthdays**",
             value: "Birthday tracking and celebration features",
+            inline: true
+        },
+        {
+            name: "📩 **Invites**",
+            value: "Invite tracking and Nitro/Robux reward claims",
             inline: true
         },
         {

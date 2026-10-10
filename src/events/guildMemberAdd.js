@@ -164,6 +164,23 @@ export default {
         } catch (error) {
             logger.debug('Error restoring birthday on member join:', error);
         }
+
+        // Invite rewards tracking
+        try {
+            const { trackMemberJoinInvite } = await import('../services/inviteRewardsService.js');
+            const inviteResult = await trackMemberJoinInvite(member.client, member);
+            if (inviteResult?.attributed) {
+                logger.debug('Invite attributed on member join', {
+                    guildId: guild.id,
+                    memberId: member.id,
+                    inviterId: inviteResult.inviterId,
+                    fake: inviteResult.fake,
+                    validInvites: inviteResult.validInvites,
+                });
+            }
+        } catch (error) {
+            logger.debug('Error tracking invite on member join:', error);
+        }
         
     } catch (error) {
         logger.error('Error in guildMemberAdd event:', error);

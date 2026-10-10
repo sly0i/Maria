@@ -130,8 +130,14 @@
     return list;
   }
 
-  function timeLabel(seed) {
-    const n = Number(seed) || 0;
+  function timeLabel(video, index = 0) {
+    const secs = Number(video?.duration);
+    if (Number.isFinite(secs) && secs > 0) {
+      const m = Math.floor(secs / 60);
+      const s = Math.floor(secs % 60);
+      return `${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}`;
+    }
+    const n = Number(video?.createdAt || index) || 0;
     return `${String((n % 17) + 5).padStart(2, "0")}:${String((n % 50) + 10).padStart(2, "0")}`;
   }
 
@@ -197,10 +203,20 @@
         </div>
       `;
 
+      if (video.thumbnail) {
+        const img = document.createElement("img");
+        img.className = "shot__thumb";
+        img.src = video.thumbnail;
+        img.alt = "";
+        img.loading = "lazy";
+        img.decoding = "async";
+        link.querySelector(".shot__art")?.after(img);
+      }
+
       link.querySelector(".shot__badge").textContent = fresh ? "Nouveau" : "Tendance";
       link.querySelector(".shot__title").textContent = video.title || "Sans titre";
       link.querySelector(".shot__views").textContent = `${viewsLabel(video.createdAt || index)} vues`;
-      link.querySelector(".shot__time").textContent = timeLabel(video.createdAt || index);
+      link.querySelector(".shot__time").textContent = timeLabel(video, index);
 
       link.addEventListener("click", (event) => {
         trackStat("video_click");

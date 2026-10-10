@@ -57,10 +57,11 @@ const STORE_PATH = path.join(DATA_DIR, "store.json");
 const STORE_BAK_PATH = path.join(DATA_DIR, "store.json.bak");
 const UPLOADS_DIR = path.join(__dirname, "uploads");
 const VIDEOS_DIR = path.join(UPLOADS_DIR, "videos");
+const THUMBS_DIR = path.join(UPLOADS_DIR, "thumbs");
 const LOGO_DIR = path.join(UPLOADS_DIR, "logo");
 const ADS_DIR = path.join(UPLOADS_DIR, "ads");
 
-for (const dir of [DATA_DIR, VIDEOS_DIR, LOGO_DIR, ADS_DIR]) {
+for (const dir of [DATA_DIR, VIDEOS_DIR, THUMBS_DIR, LOGO_DIR, ADS_DIR]) {
   fs.mkdirSync(dir, { recursive: true });
 }
 
@@ -322,12 +323,64 @@ function publicConfig(store) {
 }
 
 function publicVideo(video) {
+  const thumbName = video.thumbnailFilename || `${video.id}.jpg`;
+  const hasThumb =
+    Boolean(video.thumbnail) ||
+    (video.id && fs.existsSync(path.join(THUMBS_DIR, thumbName)));
   return {
     id: video.id,
     title: video.title,
     createdAt: video.createdAt,
     watchUrl: `/watch/${video.id}`,
+    thumbnail: hasThumb ? video.thumbnail || `/uploads/thumbs/${thumbName}` : null,
+    duration: Number(video.duration) > 0 ? Number(video.duration) : null,
   };
+}
+
+async function probeDurationSeconds(filePath) {
+  try {
+    const { stdout } = await execFileAsync(
+      "ffprobe",
+      ["-v", "error", "-show_entries", "format=duration", "-of", "default=nw=1:nk=1", filePath],
+      { timeout: 30000 }
+    );
+    const n = Number(String(stdout || "").trim());
+    return Number.isFinite(n) && n > 0 ? Math.round(n) : null;
+  } catch {
+    return null;
+  }
+}
+
+async function extractThumbnail(videoPath, videoId) {
+  const safeId = String(videoId || "").replace(/[^a-zA-Z0-9_-]/g, "");
+  if (!safeId) return null;
+  const outPath = path.join(THUMBS_DIR, `${safeId}.jpg`);
+  try {
+    await execFileAsync(
+      "ffmpeg",
+      [
+        "-y",
+        "-ss",
+        "1",
+        "-i",
+        videoPath,
+        "-frames:v",
+        "1",
+        "-vf",
+        "scale=540:-2",
+        "-q:v",
+        "3",
+        outPath,
+      ],
+      { timeout: 60000 }
+    );
+    if (fs.existsSync(outPath) && fs.statSync(outPath).size > 0) {
+      return `/uploads/thumbs/${safeId}.jpg`;
+    }
+  } catch (err) {
+    console.error("Thumbnail extract failed:", err?.message || err);
+  }
+  return null;
 }
 
 function findVideo(store, id) {
@@ -1067,16 +1120,23 @@ app.post("/api/admin/videos", requireAdmin, (req, res) => {
     }
 
     const store = readStore();
+    const id = path.parse(filename).name;
+    const [duration, thumbnail] = await Promise.all([
+      probeDurationSeconds(finalPath),
+      extractThumbnail(finalPath, id),
+    ]);
     const entry = {
-      id: path.parse(filename).name,
+      id,
       title,
       filename,
-      url: `/api/videos/${path.parse(filename).name}/stream`,
+      url: `/api/videos/${id}/stream`,
       createdAt: Date.now(),
+      duration: duration || null,
+      thumbnail: thumbnail || null,
     };
     store.videos.push(entry);
     writeStore(store);
-    res.status(201).json({ video: entry });
+    res.status(201).json({ video: publicVideo(entry) });
   });
 });
 
@@ -1090,6 +1150,9 @@ app.delete("/api/admin/videos/:id", requireAdmin, (req, res) => {
 
   if (removed?.filename) {
     fs.promises.unlink(path.join(VIDEOS_DIR, removed.filename)).catch(() => {});
+  }
+  if (removed?.id) {
+    fs.promises.unlink(path.join(THUMBS_DIR, `${removed.id}.jpg`)).catch(() => {});
   }
 
   res.json({ ok: true });
@@ -1174,6 +1237,16 @@ app.use(
 );
 
 app.use("/uploads/videos", requireAdmin, express.static(VIDEOS_DIR));
+
+app.use(
+  "/uploads/thumbs",
+  express.static(THUMBS_DIR, {
+    maxAge: "7d",
+    setHeaders(res) {
+      res.setHeader("Cache-Control", "public, max-age=604800");
+    },
+  })
+);
 
 app.use("/assets", express.static(path.join(__dirname, "assets")));
 

@@ -831,10 +831,6 @@ a {
     linear-gradient(150deg, #320816, #080006 58%, #201018);
 }
 
-.shot__shine {
-  z-index: 2;
-}
-
 .shot__veil {
   position: absolute;
   inset: 0;

@@ -193,13 +193,13 @@
           <span class="shot__play" aria-hidden="true"></span>
           <span class="shot__badge"></span>
           <span class="shot__hd">HD</span>
-          <div class="shot__foot">
-            <h4 class="shot__title"></h4>
-            <p class="shot__meta">
-              <span class="shot__views"></span>
-              <span class="shot__time"></span>
-            </p>
-          </div>
+          <span class="shot__time"></span>
+        </div>
+        <div class="shot__info">
+          <h4 class="shot__title"></h4>
+          <p class="shot__meta">
+            <span class="shot__views"></span>
+          </p>
         </div>
       `;
 

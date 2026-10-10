@@ -1236,6 +1236,10 @@ function applyBrandToHtml(html) {
     `$1${name}$2`
   );
   html = html.replace(
+    /(<h2 id="hero-brand"[^>]*>)[\s\S]*?(<\/h2>)/i,
+    `$1${name}$2`
+  );
+  html = html.replace(
     /(<p id="hero-brand"[^>]*>)[\s\S]*?(<\/p>)/i,
     `$1${name}$2`
   );

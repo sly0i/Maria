@@ -18,6 +18,13 @@
     <link rel="stylesheet" href="/styles.css" />
   </head>
   <body>
+    <div class="fx" aria-hidden="true">
+      <span class="fx__orb fx__orb--a"></span>
+      <span class="fx__orb fx__orb--b"></span>
+      <span class="fx__orb fx__orb--c"></span>
+      <span class="fx__grain"></span>
+    </div>
+
     <div id="age-gate" class="gate" role="dialog" aria-modal="true" aria-labelledby="age-title">
       <div class="gate__card">
         <button type="button" class="gate__brandBtn" id="age-brand-trigger" aria-label="Voir le message d’âge">
@@ -26,6 +33,7 @@
         </button>
 
         <div id="age-prompt" class="gate__block">
+          <p class="gate__kicker">Accès 18+</p>
           <h1 id="age-title" class="gate__title">Ce site est réservé aux adultes</h1>
           <p id="age-message" class="gate__copy">
             Contenu à caractère adulte. En continuant, tu confirmes avoir 18 ans ou plus.
@@ -180,7 +188,7 @@
 
         <section class="intro">
           <p class="intro__kicker"><span id="hero-brand-kicker">EROTICX</span> · 18+</p>
-          <h2 id="hero-brand" class="intro__brand sr-only">EroticX</h2>
+          <h2 id="hero-brand" class="intro__brand">EroticX</h2>
           <p id="hero-tagline" class="intro__headline">Regarde sans limite.</p>
           <p id="site-description" class="intro__text">Regarde les dernières publications</p>
           <div class="intro__actions">
@@ -191,7 +199,10 @@
 
         <section id="wall" class="wall" aria-labelledby="gallery-title">
           <div class="wall__head">
-            <h3 id="gallery-title">Tendances</h3>
+            <div class="wall__titles">
+              <h3 id="gallery-title">Tendances</h3>
+              <p class="wall__sub" id="gallery-count">Sélection du moment</p>
+            </div>
             <span class="wall__chip">Membres</span>
           </div>
           <div id="video-list" class="wall__list"></div>
@@ -201,11 +212,25 @@
 
       <nav class="dock" aria-label="Navigation">
         <a class="dock__item is-on" href="#wall">
-          <span class="dock__ico" aria-hidden="true">▶</span>
+          <span class="dock__ico" aria-hidden="true">
+            <svg viewBox="0 0 24 24" width="20" height="20" fill="none">
+              <path d="M8 6.5v11l9-5.5-9-5.5z" fill="currentColor" />
+            </svg>
+          </span>
           <span>Vidéos</span>
         </a>
         <button type="button" class="dock__item" id="dock-auth">
-          <span class="dock__ico" aria-hidden="true">◎</span>
+          <span class="dock__ico" aria-hidden="true">
+            <svg viewBox="0 0 24 24" width="20" height="20" fill="none">
+              <circle cx="12" cy="9" r="3.5" stroke="currentColor" stroke-width="1.8" />
+              <path
+                d="M5.5 19.5c1.4-3 3.7-4.5 6.5-4.5s5.1 1.5 6.5 4.5"
+                stroke="currentColor"
+                stroke-width="1.8"
+                stroke-linecap="round"
+              />
+            </svg>
+          </span>
           <span>Compte</span>
         </button>
       </nav>

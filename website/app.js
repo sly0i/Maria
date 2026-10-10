@@ -70,12 +70,11 @@
 
     document.title = name;
 
-    [els.ageBrandName, els.siteBrandName].forEach((node) => {
+    [els.ageBrandName, els.siteBrandName, els.heroBrand].forEach((node) => {
       if (!node) return;
       node.innerHTML = brandHtml(name);
     });
 
-    if (els.heroBrand) els.heroBrand.textContent = name;
     if (els.heroBrandKicker) els.heroBrandKicker.textContent = name.toUpperCase();
 
     [els.ageLogo, els.siteLogo].forEach((img) => {
@@ -146,6 +145,8 @@
     if (!els.videoList) return;
     els.videoList.innerHTML = "";
 
+    const countEl = document.getElementById("gallery-count");
+
     if (!videos.length) {
       if (els.videoEmpty) {
         els.videoEmpty.hidden = false;
@@ -157,24 +158,33 @@
           els.videoEmpty.textContent = "Aucune vidéo pour le moment.";
         }
       }
+      if (countEl) countEl.textContent = "Rien à afficher";
       return;
     }
 
     if (els.videoEmpty) els.videoEmpty.hidden = true;
+    if (countEl) {
+      countEl.textContent =
+        videos.length === 1 ? "1 vidéo" : `${videos.length} vidéos`;
+    }
 
-    const tones = ["a", "b", "c"];
+    const tones = ["a", "b", "c", "d", "e"];
+    const showFeatured = activeFilter === "all" && !searchQuery.trim() && videos.length >= 3;
 
     videos.forEach((video, index) => {
-      const tone = tones[index % 3];
+      const tone = tones[index % tones.length];
       const fresh = isNewVideo(video);
+      const featured = showFeatured && index === 0;
       const link = document.createElement("a");
-      link.className = `shot shot--${tone}`;
+      link.className = `shot shot--${tone}${featured ? " shot--featured" : ""}`;
       link.href = video.watchUrl || `/watch/${video.id}`;
       link.setAttribute("aria-label", `Regarder ${video.title || "vidéo"}`);
 
       link.innerHTML = `
         <div class="shot__frame">
           <span class="shot__art" aria-hidden="true"></span>
+          <span class="shot__mesh" aria-hidden="true"></span>
+          <span class="shot__shine" aria-hidden="true"></span>
           <span class="shot__veil" aria-hidden="true"></span>
           <span class="shot__play" aria-hidden="true"></span>
           <span class="shot__badge"></span>
@@ -189,7 +199,11 @@
         </div>
       `;
 
-      link.querySelector(".shot__badge").textContent = fresh ? "Nouveau" : "Tendance";
+      link.querySelector(".shot__badge").textContent = featured
+        ? "À la une"
+        : fresh
+          ? "Nouveau"
+          : "Tendance";
       link.querySelector(".shot__title").textContent = video.title || "Sans titre";
       link.querySelector(".shot__views").textContent = `${viewsLabel(video.createdAt || index)} vues`;
       link.querySelector(".shot__time").textContent = timeLabel(video.createdAt || index);

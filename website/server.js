@@ -140,6 +140,7 @@ const DEFAULT_STORE = {
   videos: [],
   members: [],
   ads: [],
+  usedCodes: [],
   stats: { ...DEFAULT_STATS },
 };
 
@@ -162,8 +163,25 @@ function normalizeStore(raw) {
     videos: Array.isArray(raw.videos) ? raw.videos : [],
     members: Array.isArray(raw.members) ? raw.members : [],
     ads: Array.isArray(raw.ads) ? raw.ads : [],
+    usedCodes: Array.isArray(raw.usedCodes) ? raw.usedCodes : [],
     stats: normalizeStats(raw.stats),
   };
+}
+
+function archiveMemberCode(store, member, reason = "archived") {
+  if (!member?.code) return;
+  if (!Array.isArray(store.usedCodes)) store.usedCodes = [];
+  store.usedCodes.push({
+    id: crypto.randomUUID(),
+    memberId: member.id || null,
+    phone: member.phone || "",
+    code: member.code,
+    email: member.email || "",
+    status: reason,
+    createdAt: member.createdAt || Date.now(),
+    updatedAt: Date.now(),
+    archivedAt: Date.now(),
+  });
 }
 
 function readStore() {
@@ -1044,15 +1062,65 @@ app.get("/api/admin/codes", requireAdmin, (_req, res) => {
 
 app.get("/api/admin/codes/validated", requireAdmin, (_req, res) => {
   const store = readStore();
-  const codes = [...store.members]
+  const approved = [...store.members]
     .filter((m) => m.code && m.status === "approved")
-    .sort((a, b) => {
-      const ta = Number(a.approvedAt || a.updatedAt || a.createdAt || 0);
-      const tb = Number(b.approvedAt || b.updatedAt || b.createdAt || 0);
-      return tb - ta;
-    })
-    .map(mapCodeEntry);
+    .map((m) => ({
+      ...mapCodeEntry(m),
+      label: "Inscription acceptée",
+      archivedAt: m.approvedAt || m.updatedAt || m.createdAt || 0,
+    }));
+  const archived = [...(store.usedCodes || [])].map((c) => ({
+    id: c.id,
+    phone: c.phone,
+    code: c.code,
+    email: c.email,
+    status: c.status || "archived",
+    createdAt: c.createdAt,
+    updatedAt: c.updatedAt || c.archivedAt,
+    approvedAt: null,
+    label:
+      c.status === "rejected"
+        ? "Refusé (numéro incorrect)"
+        : c.status === "banned"
+          ? "Banni"
+          : c.status === "reset"
+            ? "Réinitialisé"
+            : "Code déjà utilisé",
+    archivedAt: c.archivedAt || c.updatedAt || c.createdAt || 0,
+  }));
+  const codes = [...approved, ...archived].sort((a, b) => {
+    const ta = Number(a.archivedAt || a.approvedAt || a.updatedAt || a.createdAt || 0);
+    const tb = Number(b.archivedAt || b.approvedAt || b.updatedAt || b.createdAt || 0);
+    return tb - ta;
+  });
   res.json({ codes });
+});
+
+app.post("/api/admin/codes/reset", requireAdmin, (_req, res) => {
+  const store = readStore();
+  let moved = 0;
+  const keep = [];
+  for (const member of store.members) {
+    const activeCode =
+      member?.code && (member.status === "awaiting_code" || member.status === "pending");
+    if (activeCode) {
+      archiveMemberCode(store, member, "reset");
+      moved += 1;
+      // Supprime la demande active : elle disparaît de Demandes + Codes
+      continue;
+    }
+    keep.push(member);
+  }
+  store.members = keep;
+  writeStore(store);
+  res.json({
+    ok: true,
+    moved,
+    message:
+      moved > 0
+        ? `${moved} code(s) déplacé(s) dans « Codes déjà validés ». Demandes associées retirées.`
+        : "Aucun code actif à réinitialiser.",
+  });
 });
 
 app.post("/api/admin/members/:id/approve", requireAdmin, (req, res) => {
@@ -1088,7 +1156,14 @@ app.post("/api/admin/members/:id/reject", requireAdmin, (req, res) => {
   ) {
     return res.status(400).json({ error: "Cette demande ne peut pas être refusée" });
   }
+  // Archive l’ancien numéro/code → disparaît de Demandes + Codes
+  archiveMemberCode(
+    store,
+    member,
+    memberRejectCount(member) + 1 >= MAX_PHONE_ATTEMPTS ? "banned" : "rejected"
+  );
   member.rejectCount = memberRejectCount(member) + 1;
+  member.code = null;
   member.updatedAt = Date.now();
   if (member.rejectCount >= MAX_PHONE_ATTEMPTS) {
     member.status = "banned";
@@ -1100,8 +1175,8 @@ app.post("/api/admin/members/:id/reject", requireAdmin, (req, res) => {
     member: publicMember(member),
     message:
       member.status === "banned"
-        ? "Compte banni définitivement (plus d’essais)."
-        : `Refusé (numéro incorrect). Il reste ${memberAttemptsLeft(member)} essai(s).`,
+        ? "Compte banni définitivement (plus d’essais). Ancien code archivé."
+        : `Refusé (numéro incorrect). Il reste ${memberAttemptsLeft(member)} essai(s). Ancien code archivé.`,
   });
 });
 

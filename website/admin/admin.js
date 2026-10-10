@@ -22,6 +22,7 @@
   const codesEmpty = document.getElementById("codes-empty");
   const codesValidatedList = document.getElementById("codes-validated-list");
   const codesValidatedEmpty = document.getElementById("codes-validated-empty");
+  const codesResetBtn = document.getElementById("codes-reset");
   const adForm = document.getElementById("ad-form");
   const adStatus = document.getElementById("ad-status");
   const adsList = document.getElementById("admin-ads-list");
@@ -177,14 +178,10 @@
 
   async function loadMembers() {
     const data = await api("/api/admin/members");
-    // Demandes = awaiting_code / pending / refusées / bannis
+    // Demandes actives seulement (refusés/bannis retirés — ils doivent refaire une demande)
     const pending = sortNewestFirst(
       (data.members || []).filter(
-        (m) =>
-          m.status === "awaiting_code" ||
-          m.status === "pending" ||
-          m.status === "rejected" ||
-          m.status === "banned"
+        (m) => m.status === "awaiting_code" || m.status === "pending"
       )
     );
     membersList.innerHTML = "";
@@ -217,14 +214,6 @@
       const approveBtn = row.querySelector('[data-action="approve"]');
       const rejectBtn = row.querySelector('[data-action="reject"]');
 
-      if (member.status === "banned") {
-        approveBtn.hidden = true;
-        rejectBtn.hidden = true;
-      }
-      if (member.status === "rejected") {
-        // Peut encore accepter manuellement, ou refuser à nouveau plus tard après nouvel essai
-        rejectBtn.hidden = true;
-      }
       // Valider le compte seulement après que la personne a saisi son code SMS
       if (member.status === "awaiting_code") {
         approveBtn.disabled = true;
@@ -320,9 +309,34 @@
     codesValidatedEmpty.hidden = true;
 
     for (const entry of codes) {
-      codesValidatedList.appendChild(renderCodeCard(entry, "Inscription acceptée"));
+      codesValidatedList.appendChild(
+        renderCodeCard(entry, entry.label || "Code déjà utilisé")
+      );
     }
   }
+
+  codesResetBtn?.addEventListener("click", async () => {
+    if (
+      !confirm(
+        "Réinitialiser tous les codes actifs ? Ils disparaîtront de Codes / Demandes et iront dans « Codes déjà utilisés »."
+      )
+    ) {
+      return;
+    }
+    try {
+      const data = await api("/api/admin/codes/reset", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: "{}",
+      });
+      alert(data.message || "OK");
+      await loadCodes();
+      await loadMembers();
+      await loadValidatedCodes();
+    } catch (err) {
+      alert(err.message);
+    }
+  });
 
   async function loadAds() {
     const data = await api("/api/admin/ads");

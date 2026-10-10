@@ -43,7 +43,7 @@
         <button type="button" class="tabs__btn" data-tab="ads">Publicité</button>
         <button type="button" class="tabs__btn" data-tab="members">Demandes</button>
         <button type="button" class="tabs__btn" data-tab="codes">Codes</button>
-        <button type="button" class="tabs__btn" data-tab="codes-validated">Codes déjà validés</button>
+        <button type="button" class="tabs__btn" data-tab="codes-validated">Codes déjà utilisés</button>
         <button type="button" class="tabs__btn" data-tab="stats">Statistiques</button>
       </nav>
 
@@ -161,7 +161,8 @@
           <h2>Demandes de comptes</h2>
           <p class="muted">
             Dès qu’une personne s’inscrit, elle apparaît ici ET dans Codes. Le bouton Valider s’active quand
-            elle a saisi son code SMS. Accepte ou refuse ensuite pour l’accès aux vidéos.
+            elle a saisi son code SMS. Si tu refuses, la demande et le code disparaissent d’ici (archivés dans
+            Codes déjà utilisés) : la personne doit refaire une demande avec le bon numéro.
           </p>
           <div id="members-list" class="member-list"></div>
           <p id="members-empty" class="muted" hidden>Aucune demande en attente.</p>
@@ -170,12 +171,20 @@
 
       <div id="tab-codes" class="tab-panel" hidden>
         <section class="panel">
-          <h2>Numéros & codes</h2>
-          <p class="muted">
-            Ici tu vois le numéro + le code à 4 chiffres à envoyer par SMS. Tant que la personne n’a pas saisi
-            son code sur le site, elle est seulement ici. Dès qu’elle valide son code, elle reste ici ET
-            apparaît aussi dans Demandes. Quand tu acceptes la demande, ça passe dans « Codes déjà validés ».
-          </p>
+          <div class="panel-head">
+            <div>
+              <h2>Numéros & codes</h2>
+              <p class="muted">
+                Ici tu vois le numéro + le code à 4 chiffres à envoyer par SMS. Tant que la personne n’a pas
+                saisi son code sur le site, elle est seulement ici. Dès qu’elle valide son code, elle reste
+                ici ET apparaît aussi dans Demandes. Quand tu acceptes la demande, ça passe dans « Codes déjà
+                validés ».
+              </p>
+            </div>
+            <button type="button" id="codes-reset" class="btn btn--danger">
+              Réinitialiser tous les codes
+            </button>
+          </div>
           <div id="codes-list" class="code-list"></div>
           <p id="codes-empty" class="muted" hidden>Aucun code en attente pour le moment.</p>
         </section>
@@ -183,9 +192,9 @@
 
       <div id="tab-codes-validated" class="tab-panel" hidden>
         <section class="panel">
-          <h2>Codes déjà validés</h2>
+          <h2>Codes déjà utilisés</h2>
           <p class="muted">
-            Inscriptions acceptées : le numéro et le code SMS ont été déplacés ici depuis l’onglet Codes.
+            Codes acceptés, refusés ou réinitialisés : tout ce qui a quitté l’onglet Codes.
           </p>
           <div id="codes-validated-list" class="code-list"></div>
           <p id="codes-validated-empty" class="muted" hidden>Aucun code validé pour le moment.</p>

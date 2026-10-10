@@ -35,17 +35,38 @@
     autoOpenOnEntry: true,
   });
 
+  function escapeHtml(value) {
+    return String(value ?? "")
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;")
+      .replace(/'/g, "&#39;");
+  }
+
   function brandHtml(name) {
-    const raw = String(name || "EroticX");
+    const raw = String(name || "EroticX").slice(0, 60);
     if (/x$/i.test(raw) && raw.length > 1) {
-      return `${raw.slice(0, -1)}<span class="brand__x">X</span>`;
+      return `${escapeHtml(raw.slice(0, -1))}<span class="brand__x">X</span>`;
     }
-    return raw;
+    return escapeHtml(raw);
+  }
+
+  function safeLogoPath(value) {
+    const s = String(value || "");
+    if (
+      (s.startsWith("/uploads/logo/") || s.startsWith("/assets/")) &&
+      !s.includes("..") &&
+      !s.includes("\\")
+    ) {
+      return s;
+    }
+    return "/assets/logo.svg";
   }
 
   function applyBrand(cfg) {
-    const name = cfg.brandName || "EroticX";
-    const logo = cfg.logoPath || "/assets/logo.svg";
+    const name = String(cfg.brandName || "EroticX").slice(0, 60);
+    const logo = safeLogoPath(cfg.logoPath);
 
     document.title = name;
 

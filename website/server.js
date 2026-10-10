@@ -67,6 +67,11 @@ for (const dir of [DATA_DIR, VIDEOS_DIR, LOGO_DIR, ADS_DIR]) {
 let lastGoodStore = null;
 const rateBuckets = new Map();
 
+const IMAGE_EXTS = new Set([".png", ".jpg", ".jpeg", ".webp", ".gif"]);
+const VIDEO_EXTS = new Set([".mp4", ".webm", ".mov", ".m4v"]);
+const ADMIN_SESSION_MS = 1000 * 60 * 60 * 24; // 24h
+const MEMBER_SESSION_MS = 1000 * 60 * 60 * 24 * 30;
+
 function rateLimit(key, max, windowMs) {
   const now = Date.now();
   let entry = rateBuckets.get(key);
@@ -78,6 +83,25 @@ function rateLimit(key, max, windowMs) {
   return entry.count <= max;
 }
 
+// Empêche le Map de rate-limit de grossir sans fin
+setInterval(() => {
+  const now = Date.now();
+  for (const [key, entry] of rateBuckets) {
+    if (!entry || now > entry.resetAt) rateBuckets.delete(key);
+  }
+}, 60 * 1000).unref?.();
+
+function safeEqualString(a, b) {
+  const left = Buffer.from(String(a ?? ""), "utf8");
+  const right = Buffer.from(String(b ?? ""), "utf8");
+  if (left.length !== right.length) {
+    // Compare quand même pour limiter les fuites de timing sur la longueur
+    crypto.timingSafeEqual(left, Buffer.alloc(left.length));
+    return false;
+  }
+  return crypto.timingSafeEqual(left, right);
+}
+
 function cookieOptions(maxAge) {
   return {
     httpOnly: true,
@@ -85,6 +109,17 @@ function cookieOptions(maxAge) {
     secure: COOKIE_SECURE,
     maxAge,
   };
+}
+
+function isSafeUploadName(name) {
+  const base = path.basename(String(name || ""));
+  return Boolean(base) && base === name && !base.includes("..") && !base.includes("/") && !base.includes("\\");
+}
+
+function isSafePublicAssetPath(value, prefixes) {
+  const s = String(value || "");
+  if (!s.startsWith("/") || s.includes("..") || s.includes("\\")) return false;
+  return prefixes.some((p) => s.startsWith(p));
 }
 
 const DEFAULT_STATS = {
@@ -262,21 +297,25 @@ function generateCode() {
 function setMemberCookie(res, memberId) {
   const token = signToken({
     memberId,
-    exp: Date.now() + 1000 * 60 * 60 * 24 * 30,
+    exp: Date.now() + MEMBER_SESSION_MS,
   });
-  res.cookie("member_session", token, cookieOptions(1000 * 60 * 60 * 24 * 30));
+  res.cookie("member_session", token, cookieOptions(MEMBER_SESSION_MS));
 }
 
-function safeExt(originalName, fallback) {
+function safeExt(originalName, fallback, allowed) {
   const ext = path.extname(originalName || "").toLowerCase();
   if (!ext || ext.length > 10) return fallback;
+  if (allowed && !allowed.has(ext)) return fallback;
   return ext;
 }
 
 function publicConfig(store) {
+  const logoPath = isSafePublicAssetPath(store.logoPath, ["/uploads/logo/", "/assets/"])
+    ? store.logoPath
+    : "/assets/logo.svg";
   return {
-    brandName: store.brandName,
-    logoPath: store.logoPath,
+    brandName: String(store.brandName || "EroticX").slice(0, 60),
+    logoPath,
     tagline: store.tagline,
     description: store.description,
   };
@@ -292,7 +331,11 @@ function publicVideo(video) {
 }
 
 function findVideo(store, id) {
-  return store.videos.find((v) => v.id === id && v?.filename) || null;
+  const safeId = String(id || "");
+  if (!/^[a-zA-Z0-9_-]{1,80}$/.test(safeId)) return null;
+  const video = store.videos.find((v) => v.id === safeId && v?.filename) || null;
+  if (!video || !isSafeUploadName(video.filename)) return null;
+  return video;
 }
 
 async function needsTranscode(filePath) {
@@ -401,14 +444,14 @@ const videoStorage = multer.diskStorage({
   destination: (_req, _file, cb) => cb(null, VIDEOS_DIR),
   filename: (_req, file, cb) => {
     const id = crypto.randomUUID();
-    cb(null, `${id}${safeExt(file.originalname, ".mp4")}`);
+    cb(null, `${id}${safeExt(file.originalname, ".mp4", VIDEO_EXTS)}`);
   },
 });
 
 const logoStorage = multer.diskStorage({
   destination: (_req, _file, cb) => cb(null, LOGO_DIR),
   filename: (_req, file, cb) => {
-    cb(null, `logo-${Date.now()}${safeExt(file.originalname, ".png")}`);
+    cb(null, `logo-${Date.now()}${safeExt(file.originalname, ".png", IMAGE_EXTS)}`);
   },
 });
 
@@ -416,17 +459,23 @@ const uploadVideo = multer({
   storage: videoStorage,
   limits: { fileSize: 1024 * 1024 * 1024 },
   fileFilter: (_req, file, cb) => {
-    if (file.mimetype.startsWith("video/")) return cb(null, true);
-    cb(new Error("Seuls les fichiers vidéo sont acceptés"));
+    const ext = path.extname(file.originalname || "").toLowerCase();
+    if (file.mimetype.startsWith("video/") && (!ext || VIDEO_EXTS.has(ext))) {
+      return cb(null, true);
+    }
+    cb(new Error("Seuls les fichiers vidéo (mp4/webm/mov) sont acceptés"));
   },
 });
 
 const uploadLogo = multer({
   storage: logoStorage,
-  limits: { fileSize: 8 * 1024 * 1024 },
+  limits: { fileSize: 5 * 1024 * 1024 },
   fileFilter: (_req, file, cb) => {
-    if (file.mimetype.startsWith("image/")) return cb(null, true);
-    cb(new Error("Seules les images sont acceptées"));
+    const ext = path.extname(file.originalname || "").toLowerCase();
+    if (file.mimetype.startsWith("image/") && IMAGE_EXTS.has(ext)) {
+      return cb(null, true);
+    }
+    cb(new Error("Logo : PNG, JPG, WEBP ou GIF uniquement (pas de SVG)"));
   },
 });
 
@@ -434,8 +483,10 @@ const adsStorage = multer.diskStorage({
   destination: (_req, _file, cb) => cb(null, ADS_DIR),
   filename: (_req, file, cb) => {
     const id = crypto.randomUUID();
-    const fallback = file.mimetype.startsWith("video/") ? ".mp4" : ".png";
-    cb(null, `${id}${safeExt(file.originalname, fallback)}`);
+    const isVideo = file.mimetype.startsWith("video/");
+    const fallback = isVideo ? ".mp4" : ".png";
+    const allowed = isVideo ? VIDEO_EXTS : IMAGE_EXTS;
+    cb(null, `${id}${safeExt(file.originalname, fallback, allowed)}`);
   },
 });
 
@@ -443,10 +494,12 @@ const uploadAd = multer({
   storage: adsStorage,
   limits: { fileSize: 200 * 1024 * 1024 },
   fileFilter: (_req, file, cb) => {
-    if (file.mimetype.startsWith("image/") || file.mimetype.startsWith("video/")) {
-      return cb(null, true);
-    }
-    cb(new Error("Seules les images ou vidéos sont acceptées"));
+    const ext = path.extname(file.originalname || "").toLowerCase();
+    const okImage = file.mimetype.startsWith("image/") && IMAGE_EXTS.has(ext);
+    const okVideo =
+      file.mimetype.startsWith("video/") && (!ext || VIDEO_EXTS.has(ext));
+    if (okImage || okVideo) return cb(null, true);
+    cb(new Error("Pubs : image (png/jpg/webp/gif) ou vidéo (mp4/webm/mov)"));
   },
 });
 
@@ -471,11 +524,56 @@ function publicAd(ad) {
 }
 
 const app = express();
+app.disable("x-powered-by");
 if (IS_PROD || process.env.TRUST_PROXY === "1") {
   app.set("trust proxy", 1);
 }
+
+app.use((req, res, next) => {
+  res.setHeader("X-Content-Type-Options", "nosniff");
+  res.setHeader("X-Frame-Options", "DENY");
+  res.setHeader("Referrer-Policy", "strict-origin-when-cross-origin");
+  res.setHeader("Permissions-Policy", "camera=(), microphone=(), geolocation=()");
+  res.setHeader("Cross-Origin-Resource-Policy", "same-origin");
+  res.setHeader("X-Robots-Tag", "noindex, nofollow");
+  if (IS_PROD) {
+    res.setHeader("Strict-Transport-Security", "max-age=31536000; includeSubDomains");
+  }
+  next();
+});
+
+// Bloque l’accès direct aux fichiers sensibles
+app.use((req, res, next) => {
+  const p = String(req.path || "").toLowerCase();
+  if (
+    p.includes("/.env") ||
+    p.endsWith(".env") ||
+    p.includes("store.json") ||
+    p.includes("/deploy/") ||
+    p.includes("package-lock.json") ||
+    p.includes("node_modules")
+  ) {
+    return res.status(404).end();
+  }
+  next();
+});
+
+// Active seulement avec FORCE_HTTPS=1 (recommandé derrière Nginx sur VPS)
+if (process.env.FORCE_HTTPS === "1" || process.env.FORCE_HTTPS === "true") {
+  app.use((req, res, next) => {
+    const proto = req.headers["x-forwarded-proto"];
+    if (req.secure || proto === "https") return next();
+    if (!req.headers.host) return next();
+    return res.redirect(301, `https://${req.headers.host}${req.originalUrl}`);
+  });
+}
+
 app.use(cookieParser());
-app.use(express.json({ limit: "1mb" }));
+app.use(express.json({ limit: "256kb" }));
+
+app.get("/api/health", (_req, res) => {
+  res.json({ ok: true });
+});
 
 app.get("/api/config", (_req, res) => {
   res.json(publicConfig(readStore()));
@@ -490,6 +588,10 @@ const STAT_EVENT_MAP = {
 };
 
 app.post("/api/stats/event", (req, res) => {
+  const ip = req.ip || req.socket?.remoteAddress || "unknown";
+  if (!rateLimit(`stats:${ip}`, 120, 15 * 60 * 1000)) {
+    return res.status(429).json({ error: "Trop de requêtes" });
+  }
   const type = String(req.body?.type || "").trim();
   const key = STAT_EVENT_MAP[type];
   if (!key) {
@@ -767,18 +869,18 @@ app.post("/api/auth/logout", (_req, res) => {
 
 app.post("/api/admin/login", (req, res) => {
   const ip = req.ip || req.socket?.remoteAddress || "unknown";
-  if (!rateLimit(`admin-login:${ip}`, 15, 15 * 60 * 1000)) {
+  if (!rateLimit(`admin-login:${ip}`, 10, 15 * 60 * 1000)) {
     return res.status(429).json({ error: "Trop de tentatives. Réessaie plus tard." });
   }
   const password = String(req.body?.password || "");
-  if (!ADMIN_PASSWORD || password !== ADMIN_PASSWORD) {
+  if (!ADMIN_PASSWORD || !safeEqualString(password, ADMIN_PASSWORD)) {
     return res.status(401).json({ error: "Mot de passe incorrect" });
   }
   const token = signToken({
     admin: true,
-    exp: Date.now() + 1000 * 60 * 60 * 24 * 7,
+    exp: Date.now() + ADMIN_SESSION_MS,
   });
-  res.cookie("admin_session", token, cookieOptions(1000 * 60 * 60 * 24 * 7));
+  res.cookie("admin_session", token, cookieOptions(ADMIN_SESSION_MS));
   res.json({ ok: true });
 });
 
@@ -880,10 +982,15 @@ app.post("/api/admin/members/:id/reject", requireAdmin, (req, res) => {
 
 app.put("/api/admin/brand", requireAdmin, (req, res) => {
   const store = readStore();
-  const brandName = String(req.body?.brandName || "").trim();
-  const tagline = req.body?.tagline !== undefined ? String(req.body.tagline).trim() : store.tagline;
+  const brandName = String(req.body?.brandName || "").trim().slice(0, 60);
+  const tagline =
+    req.body?.tagline !== undefined
+      ? String(req.body.tagline).trim().slice(0, 180)
+      : store.tagline;
   const description =
-    req.body?.description !== undefined ? String(req.body.description).trim() : store.description;
+    req.body?.description !== undefined
+      ? String(req.body.description).trim().slice(0, 400)
+      : store.description;
 
   if (!brandName) {
     return res.status(400).json({ error: "Le nom est requis" });
@@ -899,16 +1006,21 @@ app.put("/api/admin/brand", requireAdmin, (req, res) => {
 app.post("/api/admin/logo", requireAdmin, (req, res) => {
   uploadLogo.single("logo")(req, res, (err) => {
     if (err) return res.status(400).json({ error: err.message });
-    if (!req.file) return res.status(400).json({ error: "Aucun logo envoyé" });
+    if (!req.file || !isSafeUploadName(req.file.filename)) {
+      return res.status(400).json({ error: "Aucun logo envoyé" });
+    }
 
     const store = readStore();
     const previous = store.logoPath;
     store.logoPath = `/uploads/logo/${req.file.filename}`;
     writeStore(store);
 
-    if (previous && previous.startsWith("/uploads/logo/")) {
-      const prevPath = path.join(__dirname, previous.replace(/^\//, ""));
-      fs.promises.unlink(prevPath).catch(() => {});
+    if (previous && isSafePublicAssetPath(previous, ["/uploads/logo/"])) {
+      const prevName = path.basename(previous);
+      const prevPath = path.join(LOGO_DIR, prevName);
+      if (prevPath.startsWith(LOGO_DIR + path.sep) || prevPath === LOGO_DIR) {
+        fs.promises.unlink(prevPath).catch(() => {});
+      }
     }
 
     res.json({ logoPath: store.logoPath });
@@ -920,7 +1032,7 @@ app.post("/api/admin/videos", requireAdmin, (req, res) => {
     if (err) return res.status(400).json({ error: err.message });
     if (!req.file) return res.status(400).json({ error: "Aucune vidéo envoyée" });
 
-    const title = String(req.body?.title || "").trim();
+    const title = String(req.body?.title || "").trim().slice(0, 120);
     if (!title) {
       fs.unlink(req.file.path, () => {});
       return res.status(400).json({ error: "Le titre est requis" });
@@ -1001,8 +1113,8 @@ app.post("/api/admin/ads", requireAdmin, (req, res) => {
     if (err) return res.status(400).json({ error: err.message });
     if (!req.file) return res.status(400).json({ error: "Aucun fichier envoyé" });
 
-    const redirectUrl = String(req.body?.redirectUrl || "").trim();
-    const title = String(req.body?.title || "").trim();
+    const redirectUrl = String(req.body?.redirectUrl || "").trim().slice(0, 500);
+    const title = String(req.body?.title || "").trim().slice(0, 80);
 
     if (!isHttpUrl(redirectUrl)) {
       fs.unlink(req.file.path, () => {});
@@ -1243,7 +1355,9 @@ app.get("/", (_req, res) => {
 
 app.use((err, _req, res, _next) => {
   console.error(err);
-  res.status(500).json({ error: err.message || "Erreur serveur" });
+  const message =
+    IS_PROD ? "Erreur serveur" : err.message || "Erreur serveur";
+  res.status(500).json({ error: message });
 });
 
 app.listen(PORT, "0.0.0.0", () => {

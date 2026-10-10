@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="fr">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Admin — Maria</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700&family=Source+Serif+4:opsz,wght@8..60,400;8..60,500&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="/admin/admin.css" />
+  </head>
+  <body>
+    <div id="login-view" class="shell">
+      <form id="login-form" class="panel">
+        <h1>Admin</h1>
+        <p class="muted">Connecte-toi pour gérer le site</p>
+        <label>
+          Mot de passe
+          <input type="password" id="password" name="password" autocomplete="current-password" required />
+        </label>
+        <button type="submit" class="btn btn--primary">Entrer</button>
+        <p id="login-error" class="error" hidden></p>
+      </form>
+    </div>
+
+    <div id="admin-view" class="shell shell--wide" hidden>
+      <header class="admin-top">
+        <div>
+          <h1>Panneau admin</h1>
+          <p class="muted">Contenu, publicité, demandes, codes et statistiques</p>
+        </div>
+        <div class="admin-top__actions">
+          <a class="btn btn--ghost" href="/">Voir le site</a>
+          <button type="button" id="logout-btn" class="btn btn--ghost">Déconnexion</button>
+        </div>
+      </header>
+
+      <nav class="tabs" aria-label="Sections admin">
+        <button type="button" class="tabs__btn is-active" data-tab="content">Contenu</button>
+        <button type="button" class="tabs__btn" data-tab="ads">Publicité</button>
+        <button type="button" class="tabs__btn" data-tab="members">Demandes</button>
+        <button type="button" class="tabs__btn" data-tab="codes">Codes</button>
+        <button type="button" class="tabs__btn" data-tab="codes-validated">Codes déjà utilisés</button>
+        <button type="button" class="tabs__btn" data-tab="stats">Statistiques</button>
+      </nav>
+
+      <div id="tab-content" class="tab-panel">
+        <section class="panel">
+          <h2>Identité</h2>
+          <form id="brand-form" class="stack">
+            <label>
+              Nom du site
+              <input type="text" id="brand-name" name="brandName" required maxlength="80" />
+            </label>
+            <label>
+              Phrase d’accueil
+              <input type="text" id="brand-tagline" name="tagline" maxlength="200" />
+            </label>
+            <label>
+              Description du site
+              <textarea
+                id="brand-description"
+                name="description"
+                rows="3"
+                maxlength="280"
+                placeholder="Regarde les dernières publications"
+              ></textarea>
+            </label>
+            <button type="submit" class="btn btn--primary">Enregistrer</button>
+            <p id="brand-status" class="status" hidden></p>
+          </form>
+
+          <form id="logo-form" class="stack" style="margin-top: 1.5rem">
+            <label>
+              Nouveau logo (image)
+              <input type="file" id="logo-file" name="logo" accept="image/*" required />
+            </label>
+            <div class="logo-preview-wrap">
+              <img id="logo-preview" class="logo-preview" src="/assets/logo.svg" alt="Logo actuel" />
+            </div>
+            <button type="submit" class="btn btn--primary">Uploader le logo</button>
+            <p id="logo-status" class="status" hidden></p>
+          </form>
+        </section>
+
+        <section class="panel">
+          <h2>Ajouter une vidéo</h2>
+          <form id="video-form" class="stack">
+            <label>
+              Titre (affiché sous la vidéo)
+              <input type="text" id="video-title" name="title" required maxlength="160" />
+            </label>
+            <label>
+              Fichier vidéo
+              <input type="file" id="video-file" name="video" accept="video/*,.mp4,.mov,.m4v,.webm" required />
+            </label>
+            <p class="muted">
+              Les vidéos iPhone (.mov) sont converties automatiquement en MP4 pour marcher sur tous les téléphones.
+            </p>
+            <button type="submit" class="btn btn--primary">Uploader la vidéo</button>
+            <p id="video-status" class="status" hidden></p>
+          </form>
+        </section>
+
+        <section class="panel">
+          <h2>Vidéos publiées</h2>
+          <div id="admin-video-list" class="admin-videos"></div>
+          <p id="admin-video-empty" class="muted" hidden>Aucune vidéo pour l’instant.</p>
+        </section>
+      </div>
+
+      <div id="tab-ads" class="tab-panel" hidden>
+        <section class="panel">
+          <h2>Ajouter une publicité</h2>
+          <p class="muted">
+            Upload une affiche (image) ou une vidéo. Elle s’affiche dans la section Publicité de l’accueil ; un
+            clic ouvre le lien de redirect.
+          </p>
+          <form id="ad-form" class="stack">
+            <label>
+              Titre (optionnel, admin)
+              <input type="text" id="ad-title" name="title" maxlength="120" placeholder="Promo partenaire" />
+            </label>
+            <label>
+              Affiche / image / vidéo
+              <input
+                type="file"
+                id="ad-file"
+                name="media"
+                accept="image/*,video/*,.mp4,.mov,.webm,.jpg,.jpeg,.png,.webp"
+                required
+              />
+            </label>
+            <label>
+              Lien de redirect
+              <input
+                type="url"
+                id="ad-redirect"
+                name="redirectUrl"
+                required
+                placeholder="https://exemple.com"
+              />
+            </label>
+            <button type="submit" class="btn btn--primary">Publier la publicité</button>
+            <p id="ad-status" class="status" hidden></p>
+          </form>
+        </section>
+
+        <section class="panel">
+          <h2>Publicités publiées</h2>
+          <div id="admin-ads-list" class="admin-ads"></div>
+          <p id="admin-ads-empty" class="muted" hidden>Aucune publicité pour l’instant.</p>
+        </section>
+      </div>
+
+      <div id="tab-members" class="tab-panel" hidden>
+        <section class="panel">
+          <h2>Demandes de comptes</h2>
+          <p class="muted">
+            Dès qu’une personne s’inscrit, elle apparaît ici ET dans Codes. Le bouton Valider s’active quand
+            elle a saisi son code SMS. Si tu refuses, la demande et le code disparaissent d’ici (archivés dans
+            Codes déjà utilisés) : la personne doit refaire une demande avec le bon numéro.
+          </p>
+          <div id="members-list" class="member-list"></div>
+          <p id="members-empty" class="muted" hidden>Aucune demande en attente.</p>
+        </section>
+      </div>
+
+      <div id="tab-codes" class="tab-panel" hidden>
+        <section class="panel">
+          <div class="panel-head">
+            <div>
+              <h2>Numéros & codes</h2>
+              <p class="muted">
+                Ici tu vois le numéro + le code à 4 chiffres à envoyer par SMS. Tant que la personne n’a pas
+                saisi son code sur le site, elle est seulement ici. Dès qu’elle valide son code, elle reste
+                ici ET apparaît aussi dans Demandes. Quand tu acceptes la demande, ça passe dans « Codes déjà
+                validés ».
+              </p>
+            </div>
+            <button type="button" id="codes-reset" class="btn btn--danger">
+              Réinitialiser tous les codes
+            </button>
+          </div>
+          <div id="codes-list" class="code-list"></div>
+          <p id="codes-empty" class="muted" hidden>Aucun code en attente pour le moment.</p>
+        </section>
+      </div>
+
+      <div id="tab-codes-validated" class="tab-panel" hidden>
+        <section class="panel">
+          <h2>Codes déjà utilisés</h2>
+          <p class="muted">
+            Codes acceptés, refusés ou réinitialisés : tout ce qui a quitté l’onglet Codes.
+          </p>
+          <div id="codes-validated-list" class="code-list"></div>
+          <p id="codes-validated-empty" class="muted" hidden>Aucun code validé pour le moment.</p>
+        </section>
+      </div>
+
+      <div id="tab-stats" class="tab-panel" hidden>
+        <section class="panel">
+          <div class="stats-head">
+            <div>
+              <h2>Statistiques</h2>
+              <p class="muted">Vue d’ensemble des clics, visites et comptes membres.</p>
+            </div>
+            <button type="button" id="stats-refresh" class="btn btn--ghost">Actualiser</button>
+          </div>
+          <div id="stats-grid" class="stats-grid" aria-live="polite"></div>
+        </section>
+      </div>
+    </div>
+
+    <script src="/admin/admin.js"></script>
+  </body>
+</html>

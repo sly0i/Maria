@@ -7,8 +7,7 @@
       content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1"
     />
     <meta name="theme-color" content="#12030a" />
-    <meta name="apple-mobile-web-app-capable" content="yes" />
-    <title>EroticX</title>
+    <title>Vidéo — EroticX</title>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
@@ -18,46 +17,13 @@
     <link rel="stylesheet" href="/styles.css" />
   </head>
   <body>
-    <div class="fx" aria-hidden="true">
-      <span class="fx__orb fx__orb--a"></span>
-      <span class="fx__orb fx__orb--b"></span>
-      <span class="fx__orb fx__orb--c"></span>
-      <span class="fx__grain"></span>
-    </div>
-
-    <div id="age-gate" class="gate" role="dialog" aria-modal="true" aria-labelledby="age-title">
-      <div class="gate__card">
-        <button type="button" class="gate__brandBtn" id="age-brand-trigger" aria-label="Voir le message d’âge">
-          <img id="age-logo" class="gate__logo" src="/assets/logo.svg" alt="" />
-          <span id="age-brand-name" class="gate__brand">EroticX</span>
-        </button>
-
-        <div id="age-prompt" class="gate__block">
-          <p class="gate__kicker">Accès 18+</p>
-          <h1 id="age-title" class="gate__title">Ce site est réservé aux adultes</h1>
-          <p id="age-message" class="gate__copy">
-            Contenu à caractère adulte. En continuant, tu confirmes avoir 18 ans ou plus.
-          </p>
-          <button type="button" id="btn-confirm" class="cta">J’ai 18 ans ou plus — Entrer</button>
-          <button type="button" id="btn-deny" class="cta cta--ghost">J’ai moins de 18 ans — Quitter</button>
-        </div>
-
-        <div id="age-denied" class="gate__block" hidden>
-          <h1 id="denied-title" class="gate__title">Accès refusé</h1>
-          <p id="denied-message" class="gate__copy">
-            Désolé — tu ne peux pas entrer sur ce site si tu as moins de 18 ans.
-          </p>
-        </div>
-      </div>
-    </div>
-
     <div id="auth-modal" class="auth-modal" hidden>
       <div class="auth-modal__panel" role="dialog" aria-modal="true" aria-labelledby="auth-title">
         <button type="button" id="auth-close" class="auth-modal__close" aria-label="Fermer">×</button>
 
         <div id="auth-choice" class="auth-modal__section">
-          <h2 id="auth-title" class="auth-modal__title">Bienvenue</h2>
-          <p class="auth-modal__text">Connecte-toi ou crée un compte pour regarder les vidéos.</p>
+          <h2 id="auth-title" class="auth-modal__title">Connexion requise</h2>
+          <p class="auth-modal__text">Connecte-toi ou crée un compte pour regarder cette vidéo.</p>
           <div class="auth-modal__actions">
             <button type="button" id="auth-goto-login" class="cta">Se connecter</button>
             <button type="button" id="auth-goto-register" class="cta cta--ghost">Créer un compte</button>
@@ -168,101 +134,39 @@
       </div>
     </div>
 
-    <div id="site" class="app" hidden>
-      <header class="top">
-        <button type="button" class="brand" id="site-brand" aria-label="Marque">
+    <div id="site" class="site site--watch">
+      <header class="top top--simple">
+        <a class="brand" href="/" aria-label="Retour à l’accueil">
           <img id="site-logo" src="/assets/logo.svg" alt="" />
           <span id="site-brand-name" class="brand__name">EroticX</span>
-        </button>
+        </a>
         <div class="top__actions">
           <span id="member-badge" class="member-badge" hidden></span>
           <button type="button" id="auth-open" class="cta cta--sm">Connexion</button>
           <button type="button" id="auth-logout" class="cta cta--sm cta--ghost" hidden>Déconnexion</button>
         </div>
-        <nav class="tabs" aria-label="Filtres">
-          <button type="button" class="tab is-on" data-filter="all">Vidéos</button>
-          <button type="button" class="tab" data-filter="new">Nouveau</button>
-        </nav>
-        <label class="search" id="search-box">
-          <span class="search__icon" aria-hidden="true"></span>
-          <input
-            type="search"
-            id="video-search"
-            placeholder="Chercher une vidéo…"
-            autocomplete="off"
-            enterkeyhint="search"
-          />
-          <button type="button" id="search-clear" class="search__clear" hidden aria-label="Effacer la recherche">
-            ×
-          </button>
-        </label>
       </header>
 
-      <main class="stage">
-        <section class="intro">
-          <div class="intro__row">
-            <p class="intro__kicker"><span id="hero-brand-kicker">EROTICX</span> · 18+</p>
-            <span class="intro__live" aria-hidden="true"><i></i> Live</span>
+      <main class="watch">
+        <a class="watch__back" href="/">← Retour aux vidéos</a>
+        <div id="watch-player-wrap" class="watch__player-wrap">
+          <video id="watch-player" class="watch__player" controls playsinline preload="metadata" hidden></video>
+          <div id="watch-locked" class="watch__locked">
+            <p id="watch-locked-text">Connecte-toi pour regarder cette vidéo.</p>
+            <button type="button" id="watch-unlock-btn" class="cta">Se connecter / Créer un compte</button>
           </div>
-          <h2 id="hero-brand" class="intro__brand">EroticX</h2>
-          <p id="hero-tagline" class="intro__headline">Regarde sans limite.</p>
-          <p id="site-description" class="intro__text">Les dernières publications, HD, sans fioritures.</p>
-          <div class="intro__actions">
-            <a href="#wall" class="cta cta--inline">Voir les vidéos</a>
-            <button type="button" class="cta cta--ghost cta--inline" id="intro-auth">Créer un compte</button>
+        </div>
+        <h1 id="watch-title" class="watch__title">Chargement…</h1>
+        <section id="watch-more" class="watch__more" hidden>
+          <div class="watch__more-head">
+            <h2>À regarder aussi</h2>
           </div>
-        </section>
-
-        <aside id="ads-section" class="promo" aria-label="Publicité" hidden>
-          <div class="promo__frame">
-            <div id="ads-list" class="promo__stage"></div>
-            <div id="ads-dots" class="promo__dots" hidden></div>
-          </div>
-        </aside>
-
-        <section id="wall" class="wall" aria-labelledby="gallery-title">
-          <div class="wall__head">
-            <div class="wall__titles">
-              <h3 id="gallery-title">Tendances</h3>
-              <p class="wall__sub" id="gallery-count">Sélection du moment</p>
-            </div>
-            <span class="wall__chip">Membres</span>
-          </div>
-          <div id="video-list" class="wall__list"></div>
-          <div id="video-skeleton" class="wall__skeleton" aria-hidden="true">
-            <span></span><span></span><span></span><span></span>
-          </div>
-          <p id="video-empty" class="empty" hidden>Aucune vidéo pour le moment.</p>
+          <div id="watch-more-list" class="watch__more-list"></div>
         </section>
       </main>
-
-      <nav class="dock" aria-label="Navigation">
-        <a class="dock__item is-on" href="#wall">
-          <span class="dock__ico" aria-hidden="true">
-            <svg viewBox="0 0 24 24" width="20" height="20" fill="none">
-              <path d="M8 6.5v11l9-5.5-9-5.5z" fill="currentColor" />
-            </svg>
-          </span>
-          <span>Vidéos</span>
-        </a>
-        <button type="button" class="dock__item" id="dock-auth">
-          <span class="dock__ico" aria-hidden="true">
-            <svg viewBox="0 0 24 24" width="20" height="20" fill="none">
-              <circle cx="12" cy="9" r="3.5" stroke="currentColor" stroke-width="1.8" />
-              <path
-                d="M5.5 19.5c1.4-3 3.7-4.5 6.5-4.5s5.1 1.5 6.5 4.5"
-                stroke="currentColor"
-                stroke-width="1.8"
-                stroke-linecap="round"
-              />
-            </svg>
-          </span>
-          <span>Compte</span>
-        </button>
-      </nav>
     </div>
 
     <script src="/auth.js"></script>
-    <script src="/app.js"></script>
+    <script src="/watch.js"></script>
   </body>
 </html>

@@ -1,0 +1,505 @@
+(() => {
+  const loginView = document.getElementById("login-view");
+  const adminView = document.getElementById("admin-view");
+  const loginForm = document.getElementById("login-form");
+  const loginError = document.getElementById("login-error");
+  const logoutBtn = document.getElementById("logout-btn");
+  const brandForm = document.getElementById("brand-form");
+  const brandName = document.getElementById("brand-name");
+  const brandTagline = document.getElementById("brand-tagline");
+  const brandDescription = document.getElementById("brand-description");
+  const brandStatus = document.getElementById("brand-status");
+  const logoForm = document.getElementById("logo-form");
+  const logoPreview = document.getElementById("logo-preview");
+  const logoStatus = document.getElementById("logo-status");
+  const videoForm = document.getElementById("video-form");
+  const videoStatus = document.getElementById("video-status");
+  const videoList = document.getElementById("admin-video-list");
+  const videoEmpty = document.getElementById("admin-video-empty");
+  const membersList = document.getElementById("members-list");
+  const membersEmpty = document.getElementById("members-empty");
+  const codesList = document.getElementById("codes-list");
+  const codesEmpty = document.getElementById("codes-empty");
+  const codesValidatedList = document.getElementById("codes-validated-list");
+  const codesValidatedEmpty = document.getElementById("codes-validated-empty");
+  const codesResetBtn = document.getElementById("codes-reset");
+  const adForm = document.getElementById("ad-form");
+  const adStatus = document.getElementById("ad-status");
+  const adsList = document.getElementById("admin-ads-list");
+  const adsEmpty = document.getElementById("admin-ads-empty");
+  const statsGrid = document.getElementById("stats-grid");
+  const statsRefresh = document.getElementById("stats-refresh");
+  const tabButtons = document.querySelectorAll(".tabs__btn");
+  const tabPanels = {
+    content: document.getElementById("tab-content"),
+    ads: document.getElementById("tab-ads"),
+    members: document.getElementById("tab-members"),
+    codes: document.getElementById("tab-codes"),
+    "codes-validated": document.getElementById("tab-codes-validated"),
+    stats: document.getElementById("tab-stats"),
+  };
+
+  function setStatus(el, message, ok) {
+    if (!el) return;
+    el.hidden = !message;
+    el.textContent = message || "";
+    el.classList.toggle("is-ok", Boolean(ok));
+    el.classList.toggle("is-err", Boolean(message) && !ok);
+  }
+
+  async function api(url, options = {}) {
+    const res = await fetch(url, {
+      credentials: "same-origin",
+      ...options,
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) {
+      throw new Error(data.error || "Erreur");
+    }
+    return data;
+  }
+
+  function showAdmin(authenticated) {
+    loginView.hidden = authenticated;
+    adminView.hidden = !authenticated;
+  }
+
+  function switchTab(name) {
+    for (const [key, panel] of Object.entries(tabPanels)) {
+      if (panel) panel.hidden = key !== name;
+    }
+    tabButtons.forEach((btn) => {
+      btn.classList.toggle("is-active", btn.dataset.tab === name);
+    });
+    if (name === "ads") loadAds().catch((err) => alert(err.message));
+    if (name === "members") loadMembers().catch((err) => alert(err.message));
+    if (name === "codes") loadCodes().catch((err) => alert(err.message));
+    if (name === "codes-validated") loadValidatedCodes().catch((err) => alert(err.message));
+    if (name === "stats") loadStats().catch((err) => alert(err.message));
+  }
+
+  async function loadStats() {
+    if (!statsGrid) return;
+    const data = await api("/api/admin/stats");
+    const cards = [
+      { label: "Visites page d’accueil", value: data.pageViews },
+      { label: "Confirmations 18+", value: data.ageConfirms },
+      { label: "Clics sur vidéos", value: data.videoClicks },
+      { label: "Lectures vidéo", value: data.watchViews },
+      { label: "Clics publicités", value: data.adClicks },
+      { label: "Connexions membres", value: data.logins },
+      { label: "Comptes créés", value: data.accountsTotal },
+      { label: "Comptes validés", value: data.accountsApproved },
+      { label: "Demandes en attente", value: data.accountsPending },
+      { label: "Codes non saisis", value: data.accountsAwaitingCode },
+      { label: "Comptes refusés", value: data.accountsRejected },
+      { label: "Vidéos publiées", value: data.videosCount },
+      { label: "Publicités actives", value: data.adsCount },
+    ];
+    statsGrid.innerHTML = cards
+      .map(
+        (card) => `
+      <article class="stat-card">
+        <p class="stat-card__value">${Number(card.value) || 0}</p>
+        <p class="stat-card__label">${card.label}</p>
+      </article>`
+      )
+      .join("");
+  }
+
+  function statusLabel(status, member) {
+    if (status === "pending") return "Code SMS saisi — à accepter ici";
+    if (status === "awaiting_code") return "Attend que la personne saisisse son code SMS";
+    if (status === "approved") return "Compte accepté";
+    if (status === "rejected") {
+      const left = Number(member?.attemptsLeft);
+      const n = Number.isFinite(left) ? left : "?";
+      return `Refusé (numéro incorrect) — ${n} essai(s) restant(s)`;
+    }
+    if (status === "banned") return "Banni définitivement";
+    return status;
+  }
+
+  async function loadConfig() {
+    const cfg = await api("/api/config");
+    brandName.value = cfg.brandName || "";
+    brandTagline.value = cfg.tagline || "";
+    brandDescription.value = cfg.description || "";
+    logoPreview.src = `${cfg.logoPath || "/assets/logo.svg"}?t=${Date.now()}`;
+    document.title = `Admin — ${cfg.brandName || "Site"}`;
+  }
+
+  async function loadVideos() {
+    const data = await api("/api/videos");
+    const videos = data.videos || [];
+    videoList.innerHTML = "";
+
+    if (!videos.length) {
+      videoEmpty.hidden = false;
+      return;
+    }
+
+    videoEmpty.hidden = true;
+
+    for (const video of videos) {
+      const row = document.createElement("article");
+      row.className = "admin-video";
+      row.innerHTML = `
+        <video controls playsinline preload="metadata">
+          <source src="/api/videos/${video.id}/stream" type="video/mp4" />
+        </video>
+        <div class="admin-video__meta">
+          <h3 class="admin-video__title"></h3>
+          <button type="button" class="btn btn--danger" data-id="${video.id}">Supprimer</button>
+        </div>
+      `;
+      row.querySelector(".admin-video__title").textContent = video.title;
+      row.querySelector("button").addEventListener("click", async () => {
+        if (!confirm(`Supprimer « ${video.title} » ?`)) return;
+        try {
+          await api(`/api/admin/videos/${video.id}`, { method: "DELETE" });
+          await loadVideos();
+        } catch (err) {
+          alert(err.message);
+        }
+      });
+      videoList.appendChild(row);
+    }
+  }
+
+  function sortNewestFirst(list) {
+    return [...list].sort((a, b) => {
+      const ta = Number(a.updatedAt || a.createdAt || 0);
+      const tb = Number(b.updatedAt || b.createdAt || 0);
+      if (tb !== ta) return tb - ta;
+      return Number(b.createdAt || 0) - Number(a.createdAt || 0);
+    });
+  }
+
+  async function loadMembers() {
+    const data = await api("/api/admin/members");
+    // Demandes actives seulement (refusés/bannis retirés — ils doivent refaire une demande)
+    const pending = sortNewestFirst(
+      (data.members || []).filter(
+        (m) => m.status === "awaiting_code" || m.status === "pending"
+      )
+    );
+    membersList.innerHTML = "";
+
+    if (!pending.length) {
+      membersEmpty.hidden = false;
+      return;
+    }
+
+    membersEmpty.hidden = true;
+
+    for (const member of pending) {
+      const row = document.createElement("article");
+      row.className = "member-card";
+      row.innerHTML = `
+        <div class="member-card__info">
+          <strong class="member-card__email"></strong>
+          <span class="member-card__phone"></span>
+          <span class="member-card__status"></span>
+        </div>
+        <div class="member-card__actions">
+          <button type="button" class="btn btn--primary" data-action="approve">Valider</button>
+          <button type="button" class="btn btn--danger" data-action="reject">Refuser</button>
+        </div>
+      `;
+      row.querySelector(".member-card__email").textContent = member.email;
+      row.querySelector(".member-card__phone").textContent = member.phone;
+      row.querySelector(".member-card__status").textContent = statusLabel(member.status, member);
+
+      const approveBtn = row.querySelector('[data-action="approve"]');
+      const rejectBtn = row.querySelector('[data-action="reject"]');
+
+      // Valider le compte seulement après que la personne a saisi son code SMS
+      if (member.status === "awaiting_code") {
+        approveBtn.disabled = true;
+        approveBtn.title = "La personne doit d’abord valider son code SMS";
+      }
+
+      approveBtn.addEventListener("click", async () => {
+        try {
+          await api(`/api/admin/members/${member.id}/approve`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: "{}",
+          });
+          await loadMembers();
+          await loadCodes();
+          await loadValidatedCodes();
+        } catch (err) {
+          alert(err.message);
+        }
+      });
+
+      rejectBtn.addEventListener("click", async () => {
+        const leftAfter = Math.max(0, (Number(member.attemptsLeft) || 3) - 1);
+        const warn =
+          leftAfter <= 0
+            ? `Refuser ${member.email} ? Ce sera le dernier essai → ban définitif.`
+            : `Refuser ${member.email} pour numéro incorrect ? Il lui restera ${leftAfter} essai(s).`;
+        if (!confirm(warn)) return;
+        try {
+          const data = await api(`/api/admin/members/${member.id}/reject`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: "{}",
+          });
+          if (data?.message) alert(data.message);
+          await loadMembers();
+          await loadCodes();
+          await loadValidatedCodes();
+        } catch (err) {
+          alert(err.message);
+        }
+      });
+
+      membersList.appendChild(row);
+    }
+  }
+
+  function renderCodeCard(entry, statusText) {
+    const row = document.createElement("article");
+    row.className = "code-card";
+    row.innerHTML = `
+      <div class="code-card__phone"></div>
+      <div class="code-card__code"></div>
+      <div class="code-card__meta">
+        <span class="code-card__email"></span>
+        <span class="code-card__status"></span>
+      </div>
+    `;
+    row.querySelector(".code-card__phone").textContent = entry.phone;
+    row.querySelector(".code-card__code").textContent = entry.code;
+    row.querySelector(".code-card__email").textContent = entry.email;
+    row.querySelector(".code-card__status").textContent = statusText;
+    return row;
+  }
+
+  async function loadCodes() {
+    const data = await api("/api/admin/codes");
+    const codes = sortNewestFirst(data.codes || []);
+    codesList.innerHTML = "";
+
+    if (!codes.length) {
+      codesEmpty.hidden = false;
+      return;
+    }
+
+    codesEmpty.hidden = true;
+
+    for (const entry of codes) {
+      codesList.appendChild(renderCodeCard(entry, statusLabel(entry.status, entry)));
+    }
+  }
+
+  async function loadValidatedCodes() {
+    const data = await api("/api/admin/codes/validated");
+    const codes = sortNewestFirst(data.codes || []);
+    codesValidatedList.innerHTML = "";
+
+    if (!codes.length) {
+      codesValidatedEmpty.hidden = false;
+      return;
+    }
+
+    codesValidatedEmpty.hidden = true;
+
+    for (const entry of codes) {
+      codesValidatedList.appendChild(
+        renderCodeCard(entry, entry.label || "Code déjà utilisé")
+      );
+    }
+  }
+
+  codesResetBtn?.addEventListener("click", async () => {
+    if (
+      !confirm(
+        "Réinitialiser tous les codes actifs ? Ils disparaîtront de Codes / Demandes et iront dans « Codes déjà utilisés »."
+      )
+    ) {
+      return;
+    }
+    try {
+      const data = await api("/api/admin/codes/reset", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: "{}",
+      });
+      alert(data.message || "OK");
+      await loadCodes();
+      await loadMembers();
+      await loadValidatedCodes();
+    } catch (err) {
+      alert(err.message);
+    }
+  });
+
+  async function loadAds() {
+    const data = await api("/api/admin/ads");
+    const ads = data.ads || [];
+    adsList.innerHTML = "";
+
+    if (!ads.length) {
+      adsEmpty.hidden = false;
+      return;
+    }
+
+    adsEmpty.hidden = true;
+
+    for (const ad of ads) {
+      const row = document.createElement("article");
+      row.className = "admin-ad";
+      const media =
+        ad.mediaType === "video"
+          ? `<video class="admin-ad__media" muted playsinline preload="metadata" src="${ad.url}"></video>`
+          : `<img class="admin-ad__media" src="${ad.url}" alt="" />`;
+      row.innerHTML = `
+        ${media}
+        <div class="admin-ad__meta">
+          <strong class="admin-ad__title"></strong>
+          <a class="admin-ad__link" href="#" target="_blank" rel="noopener noreferrer"></a>
+          <button type="button" class="btn btn--danger" data-id="${ad.id}">Supprimer</button>
+        </div>
+      `;
+      row.querySelector(".admin-ad__title").textContent = ad.title || (ad.mediaType === "video" ? "Vidéo" : "Affiche");
+      const link = row.querySelector(".admin-ad__link");
+      link.href = ad.redirectUrl;
+      link.textContent = ad.redirectUrl;
+      row.querySelector("button").addEventListener("click", async () => {
+        if (!confirm("Supprimer cette publicité ?")) return;
+        try {
+          await api(`/api/admin/ads/${ad.id}`, { method: "DELETE" });
+          await loadAds();
+        } catch (err) {
+          alert(err.message);
+        }
+      });
+      adsList.appendChild(row);
+    }
+  }
+
+  async function bootAdmin() {
+    await loadConfig();
+    await loadVideos();
+    showAdmin(true);
+    switchTab("content");
+  }
+
+  tabButtons.forEach((btn) => {
+    btn.addEventListener("click", () => switchTab(btn.dataset.tab));
+  });
+
+  statsRefresh?.addEventListener("click", () => {
+    loadStats().catch((err) => alert(err.message));
+  });
+
+  loginForm.addEventListener("submit", async (event) => {
+    event.preventDefault();
+    loginError.hidden = true;
+    try {
+      await api("/api/admin/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ password: document.getElementById("password").value }),
+      });
+      await bootAdmin();
+    } catch (err) {
+      loginError.textContent = err.message;
+      loginError.hidden = false;
+    }
+  });
+
+  logoutBtn.addEventListener("click", async () => {
+    await api("/api/admin/logout", { method: "POST" });
+    showAdmin(false);
+  });
+
+  brandForm.addEventListener("submit", async (event) => {
+    event.preventDefault();
+    setStatus(brandStatus, "Enregistrement…", true);
+    try {
+      await api("/api/admin/brand", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          brandName: brandName.value.trim(),
+          tagline: brandTagline.value.trim(),
+          description: brandDescription.value.trim(),
+        }),
+      });
+      setStatus(brandStatus, "Identité enregistrée.", true);
+      document.title = `Admin — ${brandName.value.trim()}`;
+    } catch (err) {
+      setStatus(brandStatus, err.message, false);
+    }
+  });
+
+  logoForm.addEventListener("submit", async (event) => {
+    event.preventDefault();
+    const file = document.getElementById("logo-file").files[0];
+    if (!file) return;
+    const body = new FormData();
+    body.append("logo", file);
+    setStatus(logoStatus, "Upload du logo…", true);
+    try {
+      const data = await api("/api/admin/logo", { method: "POST", body });
+      logoPreview.src = `${data.logoPath}?t=${Date.now()}`;
+      logoForm.reset();
+      setStatus(logoStatus, "Logo mis à jour.", true);
+    } catch (err) {
+      setStatus(logoStatus, err.message, false);
+    }
+  });
+
+  videoForm.addEventListener("submit", async (event) => {
+    event.preventDefault();
+    const title = document.getElementById("video-title").value.trim();
+    const file = document.getElementById("video-file").files[0];
+    if (!title || !file) return;
+
+    const body = new FormData();
+    body.append("title", title);
+    body.append("video", file);
+    setStatus(videoStatus, "Upload + conversion MP4 en cours (peut prendre un moment)…", true);
+
+    try {
+      await api("/api/admin/videos", { method: "POST", body });
+      videoForm.reset();
+      setStatus(videoStatus, "Vidéo publiée (compatible mobile).", true);
+      await loadVideos();
+    } catch (err) {
+      setStatus(videoStatus, err.message, false);
+    }
+  });
+
+  adForm?.addEventListener("submit", async (event) => {
+    event.preventDefault();
+    const file = document.getElementById("ad-file").files[0];
+    const redirectUrl = document.getElementById("ad-redirect").value.trim();
+    const title = document.getElementById("ad-title").value.trim();
+    if (!file || !redirectUrl) return;
+
+    const body = new FormData();
+    body.append("media", file);
+    body.append("redirectUrl", redirectUrl);
+    body.append("title", title);
+    setStatus(adStatus, "Upload de la publicité…", true);
+
+    try {
+      await api("/api/admin/ads", { method: "POST", body });
+      adForm.reset();
+      setStatus(adStatus, "Publicité publiée sur l’accueil.", true);
+      await loadAds();
+    } catch (err) {
+      setStatus(adStatus, err.message, false);
+    }
+  });
+
+  api("/api/admin/me")
+    .then(() => bootAdmin())
+    .catch(() => showAdmin(false));
+})();

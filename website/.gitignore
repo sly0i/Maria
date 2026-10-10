@@ -1,0 +1,11 @@
+node_modules/
+uploads/videos/*
+uploads/logo/*
+uploads/ads/*
+uploads/thumbs/*
+!uploads/videos/.gitkeep
+!uploads/logo/.gitkeep
+!uploads/ads/.gitkeep
+!uploads/thumbs/.gitkeep
+data/store.json
+.env

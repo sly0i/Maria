@@ -1,17 +1,11 @@
 (() => {
   const STORAGE_KEY = "site_age_verified";
-  const cfg = window.SITE_CONFIG || {};
-  const age = cfg.ageGate || {};
 
   const els = {
     gate: document.getElementById("age-gate"),
     site: document.getElementById("site"),
     prompt: document.getElementById("age-prompt"),
     denied: document.getElementById("age-denied"),
-    title: document.getElementById("age-title"),
-    message: document.getElementById("age-message"),
-    deniedTitle: document.getElementById("denied-title"),
-    deniedMessage: document.getElementById("denied-message"),
     btnConfirm: document.getElementById("btn-confirm"),
     btnDeny: document.getElementById("btn-deny"),
     ageBrandTrigger: document.getElementById("age-brand-trigger"),
@@ -21,35 +15,395 @@
     ageBrandName: document.getElementById("age-brand-name"),
     siteBrandName: document.getElementById("site-brand-name"),
     heroBrand: document.getElementById("hero-brand"),
+    heroBrandKicker: document.getElementById("hero-brand-kicker"),
     heroTagline: document.getElementById("hero-tagline"),
+    siteDescription: document.getElementById("site-description"),
+    videoList: document.getElementById("video-list"),
+    videoEmpty: document.getElementById("video-empty"),
+    adsSection: document.getElementById("ads-section"),
+    adsList: document.getElementById("ads-list"),
+    adsDots: document.getElementById("ads-dots"),
+    videoSearch: document.getElementById("video-search"),
+    searchClear: document.getElementById("search-clear"),
+    searchBox: document.getElementById("search-box"),
+    videoSkeleton: document.getElementById("video-skeleton"),
+    introAuth: document.getElementById("intro-auth"),
+    dockAuth: document.getElementById("dock-auth"),
+    topBar: document.querySelector(".top"),
   };
 
-  function applyBrand() {
-    const name = cfg.brandName || "Mon site";
-    const logo = cfg.logoPath || "assets/logo.svg";
+  let adsTimer = null;
+  let adsIndex = 0;
+
+  const auth = window.SiteAuth.createAuthController({
+    autoOpenOnEntry: true,
+  });
+
+  function escapeHtml(value) {
+    return String(value ?? "")
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;")
+      .replace(/'/g, "&#39;");
+  }
+
+  function brandHtml(name) {
+    const raw = String(name || "EroticX").slice(0, 60);
+    if (/x$/i.test(raw) && raw.length > 1) {
+      return `${escapeHtml(raw.slice(0, -1))}<span class="brand__x">X</span>`;
+    }
+    return escapeHtml(raw);
+  }
+
+  function safeLogoPath(value) {
+    const s = String(value || "");
+    if (
+      (s.startsWith("/uploads/logo/") || s.startsWith("/assets/")) &&
+      !s.includes("..") &&
+      !s.includes("\\")
+    ) {
+      return s;
+    }
+    return "/assets/logo.svg";
+  }
+
+  function applyBrand(cfg) {
+    const name = String(cfg.brandName || "EroticX").slice(0, 60);
+    const logo = safeLogoPath(cfg.logoPath);
 
     document.title = name;
 
     [els.ageBrandName, els.siteBrandName, els.heroBrand].forEach((node) => {
-      if (node) node.textContent = name;
+      if (!node) return;
+      node.innerHTML = brandHtml(name);
     });
+
+    if (els.heroBrandKicker) els.heroBrandKicker.textContent = name.toUpperCase();
 
     [els.ageLogo, els.siteLogo].forEach((img) => {
       if (!img) return;
-      img.src = logo;
+      img.src = `${logo}?t=${Date.now()}`;
       img.alt = `Logo ${name}`;
     });
 
     if (els.heroTagline) {
-      els.heroTagline.textContent = cfg.tagline || "";
+      // Short punchy headline (tagline config is often the age notice — keep it out of the hero H1)
+      els.heroTagline.textContent = "Regarde sans limite.";
     }
 
-    if (els.title) els.title.textContent = age.title || "Vérification d’âge";
-    if (els.message) els.message.textContent = age.message || "";
-    if (els.btnConfirm) els.btnConfirm.textContent = age.confirmLabel || "J’ai 18 ans";
-    if (els.btnDeny) els.btnDeny.textContent = age.denyLabel || "Je n’ai pas 18 ans";
-    if (els.deniedTitle) els.deniedTitle.textContent = age.deniedTitle || "Accès refusé";
-    if (els.deniedMessage) els.deniedMessage.textContent = age.deniedMessage || "";
+    if (els.siteDescription) {
+      els.siteDescription.textContent =
+        cfg.description || cfg.tagline || "Regarde les dernières publications";
+    }
+  }
+
+  const NEW_WINDOW_MS = 24 * 60 * 60 * 1000;
+  let allVideos = [];
+  let activeFilter = "all";
+  let searchQuery = "";
+
+  function trackStat(type) {
+    try {
+      const body = JSON.stringify({ type });
+      if (navigator.sendBeacon) {
+        const blob = new Blob([body], { type: "application/json" });
+        navigator.sendBeacon("/api/stats/event", blob);
+        return;
+      }
+      fetch("/api/stats/event", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body,
+        keepalive: true,
+      }).catch(() => {});
+    } catch (_) {}
+  }
+
+  function isNewVideo(video) {
+    const created = Number(video.createdAt) || 0;
+    return created > 0 && Date.now() - created < NEW_WINDOW_MS;
+  }
+
+  function normalizeText(value) {
+    return String(value || "")
+      .toLowerCase()
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "");
+  }
+
+  function videosForView() {
+    let list = activeFilter === "new" ? allVideos.filter(isNewVideo) : allVideos;
+    const q = normalizeText(searchQuery.trim());
+    if (q) {
+      list = list.filter((v) => normalizeText(v.title).includes(q));
+    }
+    return list;
+  }
+
+  function setSearchUi() {
+    const hasQuery = Boolean(searchQuery.trim());
+    if (els.searchClear) els.searchClear.hidden = !hasQuery;
+    els.searchBox?.classList.toggle("has-query", hasQuery);
+  }
+
+  function setLoading(isLoading) {
+    if (els.videoSkeleton) els.videoSkeleton.classList.toggle("is-on", Boolean(isLoading));
+    if (els.videoList) els.videoList.hidden = Boolean(isLoading);
+  }
+
+  function timeLabel(video, index = 0) {
+    const secs = Number(video?.duration);
+    if (Number.isFinite(secs) && secs > 0) {
+      const m = Math.floor(secs / 60);
+      const s = Math.floor(secs % 60);
+      return `${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}`;
+    }
+    const n = Number(video?.createdAt || index) || 0;
+    return `${String((n % 17) + 5).padStart(2, "0")}:${String((n % 50) + 10).padStart(2, "0")}`;
+  }
+
+  function viewsLabel(seed) {
+    const n = Number(seed) || 0;
+    const v = 1400 + (n % 9200);
+    return `${(v / 1000).toFixed(1)}k`;
+  }
+
+  function renderVideos(videos) {
+    if (!els.videoList) return;
+    els.videoList.innerHTML = "";
+    setLoading(false);
+
+    const countEl = document.getElementById("gallery-count");
+
+    if (!videos.length) {
+      if (els.videoEmpty) {
+        els.videoEmpty.hidden = false;
+        if (searchQuery.trim()) {
+          els.videoEmpty.textContent = `Aucune vidéo pour « ${searchQuery.trim()} ». Essaie un autre mot.`;
+        } else if (activeFilter === "new") {
+          els.videoEmpty.textContent = "Aucune nouvelle vidéo (24 h).";
+        } else {
+          els.videoEmpty.textContent = "Aucune vidéo pour le moment.";
+        }
+      }
+      if (countEl) countEl.textContent = "Rien à afficher";
+      return;
+    }
+
+    if (els.videoEmpty) els.videoEmpty.hidden = true;
+    if (countEl) {
+      countEl.textContent =
+        videos.length === 1 ? "1 vidéo" : `${videos.length} vidéos`;
+    }
+
+    const tones = ["a", "b", "c", "d", "e"];
+
+    videos.forEach((video, index) => {
+      const tone = tones[index % tones.length];
+      const fresh = isNewVideo(video);
+      const link = document.createElement("a");
+      link.className = `shot shot--${tone}`;
+      link.href = video.watchUrl || `/watch/${video.id}`;
+      link.setAttribute("aria-label", `Regarder ${video.title || "vidéo"}`);
+
+      link.innerHTML = `
+        <div class="shot__frame">
+          <span class="shot__art" aria-hidden="true"></span>
+          <span class="shot__mesh" aria-hidden="true"></span>
+          <span class="shot__shine" aria-hidden="true"></span>
+          <span class="shot__veil" aria-hidden="true"></span>
+          <span class="shot__play" aria-hidden="true"></span>
+          <span class="shot__badge"></span>
+          <span class="shot__hd">HD</span>
+          <span class="shot__time"></span>
+        </div>
+        <div class="shot__info">
+          <h4 class="shot__title"></h4>
+          <p class="shot__meta">
+            <span class="shot__views"></span>
+          </p>
+        </div>
+      `;
+
+      if (video.thumbnail) {
+        const img = document.createElement("img");
+        img.className = "shot__thumb";
+        img.src = video.thumbnail;
+        img.alt = "";
+        img.loading = "lazy";
+        img.decoding = "async";
+        link.querySelector(".shot__art")?.after(img);
+      }
+
+      link.querySelector(".shot__badge").textContent = fresh ? "Nouveau" : "Tendance";
+      link.querySelector(".shot__title").textContent = video.title || "Sans titre";
+      link.querySelector(".shot__views").textContent = `${viewsLabel(video.createdAt || index)} vues`;
+      link.querySelector(".shot__time").textContent = timeLabel(video, index);
+
+      link.addEventListener("click", (event) => {
+        trackStat("video_click");
+        if (auth.isApproved()) return;
+        event.preventDefault();
+        auth.requireAccess();
+      });
+
+      els.videoList.appendChild(link);
+    });
+  }
+
+  function refreshList() {
+    const title = document.getElementById("gallery-title");
+    if (title) {
+      title.textContent = activeFilter === "new" ? "Nouveau" : "Tendances";
+    }
+    document.querySelectorAll(".tab").forEach((btn) => {
+      btn.classList.toggle("is-on", btn.dataset.filter === activeFilter);
+    });
+    renderVideos(videosForView());
+  }
+
+  function setFilter(filter) {
+    activeFilter = filter === "new" ? "new" : "all";
+    refreshList();
+  }
+
+  function stopAdsCarousel() {
+    if (adsTimer) {
+      clearInterval(adsTimer);
+      adsTimer = null;
+    }
+  }
+
+  function showAdSlide(index) {
+    const slides = els.adsList?.querySelectorAll(".promo__slide");
+    if (!slides?.length) return;
+    adsIndex = ((index % slides.length) + slides.length) % slides.length;
+    slides.forEach((slide, i) => {
+      slide.classList.toggle("is-on", i === adsIndex);
+      const video = slide.querySelector("video");
+      if (video) {
+        if (i === adsIndex) video.play?.().catch(() => {});
+        else video.pause?.();
+      }
+    });
+    els.adsDots?.querySelectorAll("button").forEach((dot, i) => {
+      dot.classList.toggle("is-on", i === adsIndex);
+    });
+  }
+
+  function startAdsCarousel(count) {
+    stopAdsCarousel();
+    if (count <= 1) return;
+    adsTimer = setInterval(() => showAdSlide(adsIndex + 1), 5000);
+  }
+
+  function renderAds(ads) {
+    if (!els.adsSection || !els.adsList) return;
+    stopAdsCarousel();
+    els.adsList.innerHTML = "";
+    if (els.adsDots) {
+      els.adsDots.innerHTML = "";
+      els.adsDots.hidden = true;
+    }
+
+    if (!ads.length) {
+      els.adsSection.hidden = true;
+      return;
+    }
+
+    els.adsSection.hidden = false;
+    adsIndex = 0;
+
+    ads.forEach((ad, index) => {
+      const link = document.createElement("a");
+      link.className = "promo__slide" + (index === 0 ? " is-on" : "");
+      link.href = ad.redirectUrl || "#";
+      link.target = "_blank";
+      link.rel = "noopener noreferrer";
+      link.setAttribute("aria-label", ad.title ? `Publicité : ${ad.title}` : "Ouvrir la publicité");
+
+      if (ad.mediaType === "video") {
+        const video = document.createElement("video");
+        video.muted = true;
+        video.loop = true;
+        video.playsInline = true;
+        video.autoplay = true;
+        video.preload = "metadata";
+        video.setAttribute("playsinline", "");
+        video.src = ad.url;
+        link.appendChild(video);
+      } else {
+        const img = document.createElement("img");
+        img.src = ad.url;
+        img.alt = "";
+        link.appendChild(img);
+      }
+
+      const shade = document.createElement("span");
+      shade.className = "promo__shade";
+      shade.setAttribute("aria-hidden", "true");
+      link.appendChild(shade);
+
+      const meta = document.createElement("span");
+      meta.className = "promo__meta";
+      meta.innerHTML = `
+        <p class="promo__title-ad"></p>
+        <p class="promo__cta">Découvrir ➔</p>
+      `;
+      meta.querySelector(".promo__title-ad").textContent = ad.title || "Sponsor";
+      link.appendChild(meta);
+
+      link.addEventListener("click", () => trackStat("ad_click"));
+      els.adsList.appendChild(link);
+    });
+
+    if (ads.length > 1 && els.adsDots) {
+      els.adsDots.hidden = false;
+      ads.forEach((_, index) => {
+        const dot = document.createElement("button");
+        dot.type = "button";
+        if (index === 0) dot.className = "is-on";
+        dot.setAttribute("aria-label", `Publicité ${index + 1}`);
+        dot.addEventListener("click", () => {
+          showAdSlide(index);
+          startAdsCarousel(ads.length);
+        });
+        els.adsDots.appendChild(dot);
+      });
+    }
+
+    showAdSlide(0);
+    startAdsCarousel(ads.length);
+  }
+
+  async function loadPublicData() {
+    const [configRes, videosRes, adsRes] = await Promise.all([
+      fetch("/api/config"),
+      fetch("/api/videos"),
+      fetch("/api/ads"),
+    ]);
+
+    if (configRes.ok) applyBrand(await configRes.json());
+
+    if (videosRes.ok) {
+      const data = await videosRes.json();
+      allVideos = data.videos || [];
+      refreshList();
+    } else {
+      setLoading(false);
+      if (els.videoEmpty) {
+        els.videoEmpty.hidden = false;
+        els.videoEmpty.textContent = "Impossible de charger les vidéos.";
+      }
+    }
+
+    if (adsRes.ok) {
+      const data = await adsRes.json();
+      renderAds(data.ads || []);
+    } else {
+      renderAds([]);
+    }
   }
 
   function showGate(mode = "prompt") {
@@ -62,19 +416,18 @@
   function enterSite() {
     try {
       sessionStorage.setItem(STORAGE_KEY, "yes");
-    } catch (_) {
-      /* ignore private mode failures */
-    }
+    } catch (_) {}
     els.gate.hidden = true;
     els.site.hidden = false;
+    trackStat("age_confirm");
+    trackStat("page_view");
+    auth.maybeAutoOpen();
   }
 
   function denyAccess() {
     try {
       sessionStorage.setItem(STORAGE_KEY, "no");
-    } catch (_) {
-      /* ignore */
-    }
+    } catch (_) {}
     showGate("denied");
   }
 
@@ -98,28 +451,71 @@
     }
   }
 
-  applyBrand();
+  function openAuth() {
+    auth.requireAccess();
+  }
 
   els.btnConfirm?.addEventListener("click", enterSite);
   els.btnDeny?.addEventListener("click", denyAccess);
-
-  // Clic sur le nom / logo → message préventif (vérification d’âge)
   els.ageBrandTrigger?.addEventListener("click", () => {
-    if (els.denied && !els.denied.hidden) {
-      showGate("prompt");
-      return;
-    }
-    els.title?.scrollIntoView({ behavior: "smooth", block: "nearest" });
+    if (els.denied && !els.denied.hidden) showGate("prompt");
+  });
+  els.siteBrand?.addEventListener("click", reopenAgeMessage);
+  els.introAuth?.addEventListener("click", openAuth);
+  els.dockAuth?.addEventListener("click", openAuth);
+
+  document.querySelectorAll(".tab").forEach((btn) => {
+    btn.addEventListener("click", () => setFilter(btn.dataset.filter || "all"));
   });
 
-  els.siteBrand?.addEventListener("click", reopenAgeMessage);
+  els.videoSearch?.addEventListener("input", () => {
+    searchQuery = els.videoSearch.value || "";
+    setSearchUi();
+    refreshList();
+  });
 
-  if (isVerified()) {
-    els.gate.hidden = true;
-    els.site.hidden = false;
-  } else if (wasDenied()) {
-    showGate("denied");
-  } else {
-    showGate("prompt");
-  }
+  els.searchClear?.addEventListener("click", () => {
+    if (!els.videoSearch) return;
+    els.videoSearch.value = "";
+    searchQuery = "";
+    setSearchUi();
+    refreshList();
+    els.videoSearch.focus();
+  });
+
+  window.addEventListener(
+    "scroll",
+    () => {
+      els.topBar?.classList.toggle("is-scrolled", window.scrollY > 8);
+    },
+    { passive: true }
+  );
+
+  if (els.gate) els.gate.style.visibility = "hidden";
+  setLoading(true);
+
+  Promise.all([
+    loadPublicData().catch(() => {
+      applyBrand({
+        brandName: "EroticX",
+        logoPath: "/assets/logo.svg",
+        tagline: "Regarde sans limite.",
+        description: "Regarde les dernières publications",
+      });
+      setLoading(false);
+    }),
+    auth.refreshMember(),
+  ]).then(() => {
+    if (els.gate) els.gate.style.visibility = "";
+    if (isVerified()) {
+      els.gate.hidden = true;
+      els.site.hidden = false;
+      trackStat("page_view");
+      auth.maybeAutoOpen();
+    } else if (wasDenied()) {
+      showGate("denied");
+    } else {
+      showGate("prompt");
+    }
+  });
 })();

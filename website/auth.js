@@ -15,6 +15,17 @@
     el.hidden = hidden || !text;
   }
 
+  function rejectedCopy(member) {
+    const left = Number(member?.attemptsLeft);
+    const n = Number.isFinite(left) ? Math.max(0, left) : 2;
+    const essais = n <= 1 ? "essai" : "essais";
+    return (
+      `Ta demande a été refusée car ton numéro était incorrect. ` +
+      `Il te reste ${n} ${essais} afin de pouvoir te faire valider. ` +
+      `Si tu ne respectes pas la vérification, tu seras banni définitivement.`
+    );
+  }
+
   async function api(url, options = {}) {
     const { headers, ...rest } = options;
     const res = await fetch(url, {
@@ -61,6 +72,13 @@
       registerBack: $("register-back"),
       registerError: $("register-error"),
       registerPending: $("register-pending"),
+      registerRejected: $("register-rejected"),
+      registerRejectedText: $("register-rejected-text"),
+      retryPhoneForm: $("retry-phone-form"),
+      retryPhone: $("retry-phone"),
+      retryPhoneError: $("retry-phone-error"),
+      registerBanned: $("register-banned"),
+      registerBannedText: $("register-banned-text"),
       openBtn: $("auth-open"),
       logoutBtn: $("auth-logout"),
       badge: $("member-badge"),
@@ -92,13 +110,27 @@
       setHidden(els.registerForm, step !== "form");
       setHidden(els.codeForm, step !== "code");
       setHidden(els.registerPending, step !== "pending");
+      setHidden(els.registerRejected, step !== "rejected");
+      setHidden(els.registerBanned, step !== "banned");
       setText(els.registerError, "", true);
+      setText(els.retryPhoneError, "", true);
+
+      if (step === "rejected" && els.registerRejectedText) {
+        els.registerRejectedText.textContent = rejectedCopy(member);
+        if (els.retryPhone) els.retryPhone.value = "";
+      }
+      if (step === "banned" && els.registerBannedText) {
+        els.registerBannedText.textContent =
+          "Tu es banni définitivement pour non-respect de la vérification. Tu ne peux plus créer de compte.";
+      }
     }
 
     function updateChrome() {
       const approved = member?.status === "approved";
       const pending = member?.status === "pending";
       const awaiting = member?.status === "awaiting_code";
+      const rejected = member?.status === "rejected";
+      const banned = member?.status === "banned";
 
       if (els.badge) {
         if (approved) {
@@ -110,6 +142,12 @@
         } else if (awaiting) {
           els.badge.hidden = false;
           els.badge.textContent = "Code requis";
+        } else if (rejected) {
+          els.badge.hidden = false;
+          els.badge.textContent = "Refusé";
+        } else if (banned) {
+          els.badge.hidden = false;
+          els.badge.textContent = "Banni";
         } else {
           els.badge.hidden = true;
           els.badge.textContent = "";
@@ -127,13 +165,24 @@
       onStatusChange(member);
     }
 
+    function openRegisterForMember() {
+      openModal("register");
+      if (member?.status === "banned") resetRegisterStep("banned");
+      else if (member?.status === "rejected") resetRegisterStep("rejected");
+      else if (member?.status === "pending") resetRegisterStep("pending");
+      else if (member?.status === "awaiting_code") resetRegisterStep("code");
+      else resetRegisterStep("form");
+    }
+
     function openModal(section = "choice") {
       if (!els.modal) return;
       els.modal.hidden = false;
       document.body.classList.add("auth-open");
       showSection(section);
       if (section === "register") {
-        if (member?.status === "pending") resetRegisterStep("pending");
+        if (member?.status === "banned") resetRegisterStep("banned");
+        else if (member?.status === "rejected") resetRegisterStep("rejected");
+        else if (member?.status === "pending") resetRegisterStep("pending");
         else if (member?.status === "awaiting_code") resetRegisterStep("code");
         else resetRegisterStep("form");
       }
@@ -148,14 +197,13 @@
 
     function requireAccess(reason) {
       if (member?.status === "approved") return true;
-      if (member?.status === "pending") {
-        openModal("register");
-        resetRegisterStep("pending");
-        return false;
-      }
-      if (member?.status === "awaiting_code") {
-        openModal("register");
-        resetRegisterStep("code");
+      if (
+        member?.status === "pending" ||
+        member?.status === "awaiting_code" ||
+        member?.status === "rejected" ||
+        member?.status === "banned"
+      ) {
+        openRegisterForMember();
         return false;
       }
       openModal(reason === "login" ? "login" : "choice");
@@ -181,19 +229,20 @@
     els.gotoLogin?.addEventListener("click", () => showSection("login"));
     els.gotoRegister?.addEventListener("click", () => {
       showSection("register");
-      resetRegisterStep("form");
+      if (member?.status === "banned") resetRegisterStep("banned");
+      else if (member?.status === "rejected") resetRegisterStep("rejected");
+      else resetRegisterStep("form");
     });
     els.loginBack?.addEventListener("click", () => showSection("choice"));
     els.registerBack?.addEventListener("click", () => showSection("choice"));
     els.openBtn?.addEventListener("click", () => {
-      if (member?.status === "pending") {
-        openModal("register");
-        resetRegisterStep("pending");
-        return;
-      }
-      if (member?.status === "awaiting_code") {
-        openModal("register");
-        resetRegisterStep("code");
+      if (
+        member?.status === "pending" ||
+        member?.status === "awaiting_code" ||
+        member?.status === "rejected" ||
+        member?.status === "banned"
+      ) {
+        openRegisterForMember();
         return;
       }
       openModal("choice");
@@ -235,6 +284,20 @@
           if ($("register-email")) $("register-email").value = $("login-email").value;
         }
       } catch (err) {
+        if (err.data?.step === "rejected" || err.data?.member?.status === "rejected") {
+          member = err.data.member || member;
+          updateChrome();
+          showSection("register");
+          resetRegisterStep("rejected");
+          return;
+        }
+        if (err.data?.step === "banned" || err.data?.member?.status === "banned") {
+          member = err.data.member || member;
+          updateChrome();
+          showSection("register");
+          resetRegisterStep("banned");
+          return;
+        }
         setText(els.loginError, err.message);
       }
     });
@@ -260,7 +323,43 @@
           resetRegisterStep("pending");
           return;
         }
+        if (err.data?.step === "banned" || err.data?.member?.status === "banned") {
+          member = err.data.member || member;
+          updateChrome();
+          resetRegisterStep("banned");
+          return;
+        }
         setText(els.registerError, err.message);
+      }
+    });
+
+    els.retryPhoneForm?.addEventListener("submit", async (event) => {
+      event.preventDefault();
+      setText(els.retryPhoneError, "", true);
+      if (!member?.email) {
+        setText(els.retryPhoneError, "Reconnecte-toi avec ton e-mail pour réessayer.");
+        return;
+      }
+      try {
+        const data = await api("/api/auth/register", {
+          method: "POST",
+          body: JSON.stringify({
+            email: member.email,
+            phone: els.retryPhone?.value,
+          }),
+        });
+        member = data.member;
+        updateChrome();
+        if ($("register-email")) $("register-email").value = member.email || "";
+        resetRegisterStep("code");
+      } catch (err) {
+        if (err.data?.step === "banned" || err.data?.member?.status === "banned") {
+          member = err.data.member || member;
+          updateChrome();
+          resetRegisterStep("banned");
+          return;
+        }
+        setText(els.retryPhoneError, err.message);
       }
     });
 
@@ -281,7 +380,6 @@
         updateChrome();
         resetRegisterStep("pending");
       } catch {
-        // Pas de "Code incorrect" : le vrai code est sur le téléphone
         if (codeInput) codeInput.value = "";
         setText(codeError, "", true);
       }
@@ -299,6 +397,10 @@
         if (!autoOpenOnEntry) return;
         if (member?.status === "approved") return;
         if (wasDismissed()) return;
+        if (member?.status === "rejected" || member?.status === "banned") {
+          openRegisterForMember();
+          return;
+        }
         openModal("choice");
       },
     };

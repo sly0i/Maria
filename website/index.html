@@ -140,6 +140,25 @@
             Code validé. Ta demande est envoyée : patiente environ 5 minutes qu’un admin valide ton inscription
             pour accéder aux vidéos.
           </p>
+
+          <div id="register-rejected" class="auth-rejected" hidden>
+            <p id="register-rejected-text" class="auth-rejected__text"></p>
+            <form id="retry-phone-form" class="auth-form">
+              <label>
+                Nouveau numéro (le bon)
+                <input type="tel" id="retry-phone" name="phone" autocomplete="tel" required />
+              </label>
+              <button type="submit" class="cta">Réessayer avec ce numéro</button>
+              <p id="retry-phone-error" class="auth-error" hidden></p>
+            </form>
+          </div>
+
+          <div id="register-banned" class="auth-banned" hidden>
+            <p id="register-banned-text" class="auth-banned__text">
+              Tu es banni définitivement pour non-respect de la vérification. Tu ne peux plus créer de compte.
+            </p>
+          </div>
+
           <p class="auth-safe">
             C’est sécurisé et à but simplement pour te créer un compte. Tes infos ne servent qu’à
             l’inscription — c’est safe.

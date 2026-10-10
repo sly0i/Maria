@@ -262,14 +262,38 @@ function getMemberFromRequest(req) {
   return member;
 }
 
+const MAX_PHONE_ATTEMPTS = 3;
+
+function memberRejectCount(member) {
+  const n = Number(member?.rejectCount || 0);
+  return Number.isFinite(n) && n > 0 ? Math.floor(n) : 0;
+}
+
+function memberAttemptsLeft(member) {
+  return Math.max(0, MAX_PHONE_ATTEMPTS - memberRejectCount(member));
+}
+
 function publicMember(member) {
   if (!member) return null;
+  const rejectCount = memberRejectCount(member);
   return {
     id: member.id,
     email: member.email,
     phone: member.phone,
     status: member.status,
+    rejectCount,
+    attemptsLeft: Math.max(0, MAX_PHONE_ATTEMPTS - rejectCount),
   };
+}
+
+function rejectedMessage(member) {
+  const left = memberAttemptsLeft(member);
+  const essais = left <= 1 ? "essai" : "essais";
+  return (
+    `Ta demande a été refusée car ton numéro était incorrect. ` +
+    `Il te reste ${left} ${essais} afin de pouvoir te faire valider. ` +
+    `Si tu ne respectes pas la vérification, tu seras banni définitivement.`
+  );
 }
 
 function normalizeEmail(email) {
@@ -665,6 +689,7 @@ app.get("/api/admin/stats", requireAdmin, (_req, res) => {
     accountsPending: members.filter((m) => m.status === "pending").length,
     accountsApproved: members.filter((m) => m.status === "approved").length,
     accountsRejected: members.filter((m) => m.status === "rejected").length,
+    accountsBanned: members.filter((m) => m.status === "banned").length,
     videosCount: (store.videos || []).length,
     adsCount: (store.ads || []).length,
   });
@@ -746,6 +771,14 @@ app.post("/api/auth/register", (req, res) => {
   const store = readStore();
   const existing = store.members.find((m) => m.email === email);
 
+  if (existing?.status === "banned") {
+    return res.status(403).json({
+      error:
+        "Tu es banni définitivement pour non-respect de la vérification. Tu ne peux plus créer de compte.",
+      member: publicMember(existing),
+      step: "banned",
+    });
+  }
   if (existing?.status === "approved") {
     return res.status(409).json({
       error: "Un compte existe déjà avec cet e-mail. Connecte-toi.",
@@ -758,6 +791,17 @@ app.post("/api/auth/register", (req, res) => {
     });
   }
   if (existing?.status === "rejected") {
+    if (memberAttemptsLeft(existing) <= 0) {
+      existing.status = "banned";
+      existing.updatedAt = Date.now();
+      writeStore(store);
+      return res.status(403).json({
+        error:
+          "Tu es banni définitivement pour non-respect de la vérification. Tu ne peux plus créer de compte.",
+        member: publicMember(existing),
+        step: "banned",
+      });
+    }
     existing.phone = phone;
     existing.code = generateCode();
     existing.status = "awaiting_code";
@@ -767,7 +811,8 @@ app.post("/api/auth/register", (req, res) => {
     return res.json({
       ok: true,
       step: "code",
-      message: "Un code à 4 chiffres a été généré. Un admin te le communiquera.",
+      message:
+        "Nouveau numéro enregistré. Un code à 4 chiffres a été généré. Un admin te le communiquera.",
       member: publicMember(existing),
     });
   }
@@ -899,10 +944,19 @@ app.post("/api/auth/login", (req, res) => {
       member: publicMember(member),
     });
   }
+  if (member.status === "banned") {
+    return res.status(403).json({
+      error:
+        "Tu es banni définitivement pour non-respect de la vérification. Tu ne peux plus te connecter.",
+      member: publicMember(member),
+      step: "banned",
+    });
+  }
   if (member.status === "rejected") {
     return res.status(403).json({
-      error: "Ta demande a été refusée. Crée à nouveau un compte.",
+      error: rejectedMessage(member),
       member: publicMember(member),
+      step: "rejected",
     });
   }
 
@@ -1008,6 +1062,9 @@ app.post("/api/admin/members/:id/approve", requireAdmin, (req, res) => {
   const store = readStore();
   const member = findMemberById(store, req.params.id);
   if (!member) return res.status(404).json({ error: "Membre introuvable" });
+  if (member.status === "banned") {
+    return res.status(400).json({ error: "Ce compte est banni définitivement" });
+  }
   if (member.status !== "pending" && member.status !== "rejected") {
     return res.status(400).json({
       error: "La personne doit d’abord valider son code SMS avant que tu puisses accepter la demande",
@@ -1024,13 +1081,31 @@ app.post("/api/admin/members/:id/reject", requireAdmin, (req, res) => {
   const store = readStore();
   const member = findMemberById(store, req.params.id);
   if (!member) return res.status(404).json({ error: "Membre introuvable" });
-  if (member.status !== "pending" && member.status !== "awaiting_code") {
+  if (member.status === "banned") {
+    return res.status(400).json({ error: "Ce compte est déjà banni définitivement" });
+  }
+  if (
+    member.status !== "pending" &&
+    member.status !== "awaiting_code" &&
+    member.status !== "rejected"
+  ) {
     return res.status(400).json({ error: "Cette demande ne peut pas être refusée" });
   }
-  member.status = "rejected";
+  member.rejectCount = memberRejectCount(member) + 1;
   member.updatedAt = Date.now();
+  if (member.rejectCount >= MAX_PHONE_ATTEMPTS) {
+    member.status = "banned";
+  } else {
+    member.status = "rejected";
+  }
   writeStore(store);
-  res.json({ member: publicMember(member) });
+  res.json({
+    member: publicMember(member),
+    message:
+      member.status === "banned"
+        ? "Compte banni définitivement (plus d’essais)."
+        : `Refusé (numéro incorrect). Il reste ${memberAttemptsLeft(member)} essai(s).`,
+  });
 });
 
 app.put("/api/admin/brand", requireAdmin, (req, res) => {

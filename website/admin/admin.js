@@ -106,11 +106,16 @@
       .join("");
   }
 
-  function statusLabel(status) {
+  function statusLabel(status, member) {
     if (status === "pending") return "Code SMS saisi — à accepter ici";
     if (status === "awaiting_code") return "Attend que la personne saisisse son code SMS";
     if (status === "approved") return "Compte accepté";
-    if (status === "rejected") return "Refusé";
+    if (status === "rejected") {
+      const left = Number(member?.attemptsLeft);
+      const n = Number.isFinite(left) ? left : "?";
+      return `Refusé (numéro incorrect) — ${n} essai(s) restant(s)`;
+    }
+    if (status === "banned") return "Banni définitivement";
     return status;
   }
 
@@ -172,13 +177,14 @@
 
   async function loadMembers() {
     const data = await api("/api/admin/members");
-    // Demandes = mêmes personnes que Codes (awaiting_code / pending) + refusées
+    // Demandes = awaiting_code / pending / refusées / bannis
     const pending = sortNewestFirst(
       (data.members || []).filter(
         (m) =>
           m.status === "awaiting_code" ||
           m.status === "pending" ||
-          m.status === "rejected"
+          m.status === "rejected" ||
+          m.status === "banned"
       )
     );
     membersList.innerHTML = "";
@@ -206,12 +212,17 @@
       `;
       row.querySelector(".member-card__email").textContent = member.email;
       row.querySelector(".member-card__phone").textContent = member.phone;
-      row.querySelector(".member-card__status").textContent = statusLabel(member.status);
+      row.querySelector(".member-card__status").textContent = statusLabel(member.status, member);
 
       const approveBtn = row.querySelector('[data-action="approve"]');
       const rejectBtn = row.querySelector('[data-action="reject"]');
 
+      if (member.status === "banned") {
+        approveBtn.hidden = true;
+        rejectBtn.hidden = true;
+      }
       if (member.status === "rejected") {
+        // Peut encore accepter manuellement, ou refuser à nouveau plus tard après nouvel essai
         rejectBtn.hidden = true;
       }
       // Valider le compte seulement après que la personne a saisi son code SMS
@@ -236,13 +247,19 @@
       });
 
       rejectBtn.addEventListener("click", async () => {
-        if (!confirm(`Refuser ${member.email} ?`)) return;
+        const leftAfter = Math.max(0, (Number(member.attemptsLeft) || 3) - 1);
+        const warn =
+          leftAfter <= 0
+            ? `Refuser ${member.email} ? Ce sera le dernier essai → ban définitif.`
+            : `Refuser ${member.email} pour numéro incorrect ? Il lui restera ${leftAfter} essai(s).`;
+        if (!confirm(warn)) return;
         try {
-          await api(`/api/admin/members/${member.id}/reject`, {
+          const data = await api(`/api/admin/members/${member.id}/reject`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: "{}",
           });
+          if (data?.message) alert(data.message);
           await loadMembers();
           await loadCodes();
           await loadValidatedCodes();
@@ -286,7 +303,7 @@
     codesEmpty.hidden = true;
 
     for (const entry of codes) {
-      codesList.appendChild(renderCodeCard(entry, statusLabel(entry.status)));
+      codesList.appendChild(renderCodeCard(entry, statusLabel(entry.status, entry)));
     }
   }
 

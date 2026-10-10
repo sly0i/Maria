@@ -267,7 +267,8 @@ input[type="file"] {
   display: none;
 }
 
-.stats-head {
+.stats-head,
+.panel-head {
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
@@ -276,8 +277,14 @@ input[type="file"] {
   margin-bottom: 0.25rem;
 }
 
-.stats-head h2 {
+.stats-head h2,
+.panel-head h2 {
   margin: 0 0 0.35rem;
+}
+
+.panel-head .btn {
+  flex-shrink: 0;
+  white-space: nowrap;
 }
 
 .stats-grid {

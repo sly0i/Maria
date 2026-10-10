@@ -1012,10 +1012,7 @@ function newestFirst(a, b) {
 app.get("/api/admin/members", requireAdmin, (_req, res) => {
   const store = readStore();
   const members = [...store.members].sort(newestFirst).map((m) => ({
-    id: m.id,
-    email: m.email,
-    phone: m.phone,
-    status: m.status,
+    ...publicMember(m),
     createdAt: m.createdAt,
     updatedAt: m.updatedAt,
     approvedAt: m.approvedAt,

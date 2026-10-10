@@ -6,7 +6,7 @@
       name="viewport"
       content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1"
     />
-    <meta name="theme-color" content="#0a0006" />
+    <meta name="theme-color" content="#12030a" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <title>EroticX</title>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -164,7 +164,7 @@
           <button type="button" class="tab is-on" data-filter="all">Vidéos</button>
           <button type="button" class="tab" data-filter="new">Nouveau</button>
         </nav>
-        <label class="search">
+        <label class="search" id="search-box">
           <span class="search__icon" aria-hidden="true"></span>
           <input
             type="search"
@@ -173,6 +173,9 @@
             autocomplete="off"
             enterkeyhint="search"
           />
+          <button type="button" id="search-clear" class="search__clear" hidden aria-label="Effacer la recherche">
+            ×
+          </button>
         </label>
       </header>
 
@@ -207,6 +210,9 @@
             <span class="wall__chip">Membres</span>
           </div>
           <div id="video-list" class="wall__list"></div>
+          <div id="video-skeleton" class="wall__skeleton" aria-hidden="true">
+            <span></span><span></span><span></span><span></span>
+          </div>
           <p id="video-empty" class="empty" hidden>Aucune vidéo pour le moment.</p>
         </section>
       </main>

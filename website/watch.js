@@ -10,6 +10,8 @@
     locked: document.getElementById("watch-locked"),
     lockedText: document.getElementById("watch-locked-text"),
     unlockBtn: document.getElementById("watch-unlock-btn"),
+    more: document.getElementById("watch-more"),
+    moreList: document.getElementById("watch-more-list"),
   };
 
   if (!sessionStorage.getItem(STORAGE_KEY) || sessionStorage.getItem(STORAGE_KEY) === "no") {
@@ -79,6 +81,61 @@
     } catch (_) {}
   }
 
+  function timeLabel(video) {
+    const secs = Number(video?.duration);
+    if (Number.isFinite(secs) && secs > 0) {
+      const m = Math.floor(secs / 60);
+      const s = Math.floor(secs % 60);
+      return `${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}`;
+    }
+    return "00:04";
+  }
+
+  function renderMore(videos) {
+    if (!els.more || !els.moreList) return;
+    const others = (videos || []).filter((v) => v.id !== videoId).slice(0, 8);
+    if (!others.length) {
+      els.more.hidden = true;
+      return;
+    }
+    els.more.hidden = false;
+    els.moreList.innerHTML = "";
+    const tones = ["a", "b", "c", "d", "e"];
+    others.forEach((video, index) => {
+      const link = document.createElement("a");
+      link.className = `watch__more-card shot shot--${tones[index % tones.length]}`;
+      link.href = video.watchUrl || `/watch/${video.id}`;
+      link.innerHTML = `
+        <div class="shot__frame">
+          <span class="shot__art" aria-hidden="true"></span>
+          <span class="shot__veil" aria-hidden="true"></span>
+          <span class="shot__play" aria-hidden="true"></span>
+          <span class="shot__hd">HD</span>
+          <span class="shot__time"></span>
+        </div>
+        <div class="shot__info">
+          <h3 class="shot__title"></h3>
+        </div>
+      `;
+      if (video.thumbnail) {
+        const img = document.createElement("img");
+        img.className = "shot__thumb";
+        img.src = video.thumbnail;
+        img.alt = "";
+        img.loading = "lazy";
+        link.querySelector(".shot__art")?.after(img);
+      }
+      link.querySelector(".shot__title").textContent = video.title || "Sans titre";
+      link.querySelector(".shot__time").textContent = timeLabel(video);
+      link.addEventListener("click", (event) => {
+        if (auth.isApproved()) return;
+        event.preventDefault();
+        auth.requireAccess();
+      });
+      els.moreList.appendChild(link);
+    });
+  }
+
   let playerStarted = false;
 
   function loadPlayer() {
@@ -105,8 +162,17 @@
     }
     const data = await res.json();
     if (els.title) els.title.textContent = data.video?.title || "Vidéo";
-    document.title = `${data.video?.title || "Vidéo"} — ${els.brandName?.textContent || "Maria"}`;
+    document.title = `${data.video?.title || "Vidéo"} — ${els.brandName?.textContent || "EroticX"}`;
     return data.video;
+  }
+
+  async function loadMore() {
+    try {
+      const res = await fetch("/api/videos");
+      if (!res.ok) return;
+      const data = await res.json();
+      renderMore(data.videos || []);
+    } catch (_) {}
   }
 
   els.unlockBtn?.addEventListener("click", () => {
@@ -118,6 +184,7 @@
       .then((r) => (r.ok ? r.json() : null))
       .then((cfg) => cfg && applyBrand(cfg)),
     loadVideoMeta(),
+    loadMore(),
     auth.refreshMember(),
   ]).then(() => {
     if (auth.isApproved()) {

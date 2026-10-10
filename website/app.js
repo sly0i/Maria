@@ -24,8 +24,12 @@
     adsList: document.getElementById("ads-list"),
     adsDots: document.getElementById("ads-dots"),
     videoSearch: document.getElementById("video-search"),
+    searchClear: document.getElementById("search-clear"),
+    searchBox: document.getElementById("search-box"),
+    videoSkeleton: document.getElementById("video-skeleton"),
     introAuth: document.getElementById("intro-auth"),
     dockAuth: document.getElementById("dock-auth"),
+    topBar: document.querySelector(".top"),
   };
 
   let adsTimer = null;
@@ -121,13 +125,31 @@
     return created > 0 && Date.now() - created < NEW_WINDOW_MS;
   }
 
+  function normalizeText(value) {
+    return String(value || "")
+      .toLowerCase()
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "");
+  }
+
   function videosForView() {
     let list = activeFilter === "new" ? allVideos.filter(isNewVideo) : allVideos;
-    const q = searchQuery.trim().toLowerCase();
+    const q = normalizeText(searchQuery.trim());
     if (q) {
-      list = list.filter((v) => String(v.title || "").toLowerCase().includes(q));
+      list = list.filter((v) => normalizeText(v.title).includes(q));
     }
     return list;
+  }
+
+  function setSearchUi() {
+    const hasQuery = Boolean(searchQuery.trim());
+    if (els.searchClear) els.searchClear.hidden = !hasQuery;
+    els.searchBox?.classList.toggle("has-query", hasQuery);
+  }
+
+  function setLoading(isLoading) {
+    if (els.videoSkeleton) els.videoSkeleton.classList.toggle("is-on", Boolean(isLoading));
+    if (els.videoList) els.videoList.hidden = Boolean(isLoading);
   }
 
   function timeLabel(video, index = 0) {
@@ -150,6 +172,7 @@
   function renderVideos(videos) {
     if (!els.videoList) return;
     els.videoList.innerHTML = "";
+    setLoading(false);
 
     const countEl = document.getElementById("gallery-count");
 
@@ -157,7 +180,7 @@
       if (els.videoEmpty) {
         els.videoEmpty.hidden = false;
         if (searchQuery.trim()) {
-          els.videoEmpty.textContent = "Aucune vidéo ne correspond à ta recherche.";
+          els.videoEmpty.textContent = `Aucune vidéo pour « ${searchQuery.trim()} ». Essaie un autre mot.`;
         } else if (activeFilter === "new") {
           els.videoEmpty.textContent = "Aucune nouvelle vidéo (24 h).";
         } else {
@@ -367,6 +390,12 @@
       const data = await videosRes.json();
       allVideos = data.videos || [];
       refreshList();
+    } else {
+      setLoading(false);
+      if (els.videoEmpty) {
+        els.videoEmpty.hidden = false;
+        els.videoEmpty.textContent = "Impossible de charger les vidéos.";
+      }
     }
 
     if (adsRes.ok) {
@@ -441,10 +470,29 @@
 
   els.videoSearch?.addEventListener("input", () => {
     searchQuery = els.videoSearch.value || "";
+    setSearchUi();
     refreshList();
   });
 
+  els.searchClear?.addEventListener("click", () => {
+    if (!els.videoSearch) return;
+    els.videoSearch.value = "";
+    searchQuery = "";
+    setSearchUi();
+    refreshList();
+    els.videoSearch.focus();
+  });
+
+  window.addEventListener(
+    "scroll",
+    () => {
+      els.topBar?.classList.toggle("is-scrolled", window.scrollY > 8);
+    },
+    { passive: true }
+  );
+
   if (els.gate) els.gate.style.visibility = "hidden";
+  setLoading(true);
 
   Promise.all([
     loadPublicData().catch(() => {
@@ -454,6 +502,7 @@
         tagline: "Regarde sans limite.",
         description: "Regarde les dernières publications",
       });
+      setLoading(false);
     }),
     auth.refreshMember(),
   ]).then(() => {

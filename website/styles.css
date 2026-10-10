@@ -482,27 +482,35 @@ a {
   margin: 0 auto;
 }
 
-/* ---------- Promo / ads (slim strip between intro and gallery) ---------- */
+/* ---------- Promo / ads (inline after first video row) ---------- */
 
 .promo {
-  padding: 0.25rem 1rem 0.05rem;
+  padding: 0.2rem 0 0.35rem;
+}
+
+.wall__list > .promo {
+  grid-column: 1 / -1;
+  width: 100%;
+  max-width: none;
+  margin: 0;
+  padding: 0.15rem 0 0.4rem;
 }
 
 .promo__frame {
   position: relative;
   border-radius: 12px;
   overflow: hidden;
-  border: 1px solid rgba(255, 111, 160, 0.16);
+  border: 1px solid rgba(255, 111, 160, 0.14);
   background: var(--night);
-  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.22);
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.2);
 }
 
 .promo__stage {
   position: relative;
   width: 100%;
-  height: 92px;
-  max-height: 92px;
-  min-height: 92px;
+  height: 84px;
+  max-height: 84px;
+  min-height: 84px;
   aspect-ratio: auto;
 }
 
@@ -1348,7 +1356,6 @@ a {
     padding-right: 1.25rem;
   }
 
-  .promo,
   .intro,
   .wall,
   .watch {
@@ -1362,9 +1369,9 @@ a {
   }
 
   .promo__stage {
-    height: 88px;
-    max-height: 88px;
-    min-height: 88px;
+    height: 80px;
+    max-height: 80px;
+    min-height: 80px;
   }
 
   .intro__actions {
@@ -1465,10 +1472,8 @@ a {
     width: 100%;
   }
 
-  .promo {
-    padding: 0.35rem 1.5rem 0.1rem;
-    max-width: 920px;
-    margin-inline: auto;
+  .wall__list > .promo {
+    padding: 0.25rem 0 0.5rem;
   }
 
   .promo__frame {
@@ -1476,21 +1481,21 @@ a {
   }
 
   .promo__stage {
-    height: 78px;
-    max-height: 78px;
-    min-height: 78px;
+    height: 72px;
+    max-height: 72px;
+    min-height: 72px;
   }
 
   .promo__title-ad {
-    font-size: 0.88rem;
+    font-size: 0.86rem;
   }
 
   .promo__cta {
-    font-size: 0.68rem;
+    font-size: 0.66rem;
   }
 
   .promo__meta {
-    bottom: 0.45rem;
+    bottom: 0.4rem;
     left: 0.85rem;
   }
 

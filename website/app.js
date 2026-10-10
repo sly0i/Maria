@@ -141,8 +141,33 @@
     return `${(v / 1000).toFixed(1)}k`;
   }
 
+  function parkAds() {
+    if (!els.adsSection || !els.videoList) return;
+    if (els.adsSection.parentElement === els.videoList) {
+      els.videoList.parentElement?.insertBefore(els.adsSection, els.videoList.nextSibling);
+    }
+  }
+
+  function gridColumnCount() {
+    if (!els.videoList) return 2;
+    const cols = getComputedStyle(els.videoList).gridTemplateColumns.split(/\s+/).filter(Boolean);
+    return Math.max(1, cols.length);
+  }
+
+  function placeAdsInFeed() {
+    if (!els.adsSection || !els.videoList || els.adsSection.hidden) return;
+    const shots = [...els.videoList.querySelectorAll(":scope > .shot")];
+    if (!shots.length) {
+      parkAds();
+      return;
+    }
+    const after = Math.min(gridColumnCount(), shots.length);
+    shots[after - 1].after(els.adsSection);
+  }
+
   function renderVideos(videos) {
     if (!els.videoList) return;
+    parkAds();
     els.videoList.innerHTML = "";
 
     const countEl = document.getElementById("gallery-count");
@@ -211,6 +236,8 @@
 
       els.videoList.appendChild(link);
     });
+
+    placeAdsInFeed();
   }
 
   function refreshList() {
@@ -336,6 +363,7 @@
 
     showAdSlide(0);
     startAdsCarousel(ads.length);
+    placeAdsInFeed();
   }
 
   async function loadPublicData() {
@@ -426,6 +454,12 @@
   els.videoSearch?.addEventListener("input", () => {
     searchQuery = els.videoSearch.value || "";
     refreshList();
+  });
+
+  let adsPlaceTimer = null;
+  window.addEventListener("resize", () => {
+    clearTimeout(adsPlaceTimer);
+    adsPlaceTimer = setTimeout(placeAdsInFeed, 120);
   });
 
   if (els.gate) els.gate.style.visibility = "hidden";

@@ -482,27 +482,28 @@ a {
   margin: 0 auto;
 }
 
-/* ---------- Promo / ads (between intro and gallery) ---------- */
+/* ---------- Promo / ads (slim strip between intro and gallery) ---------- */
 
 .promo {
-  padding: 0.35rem 1rem 0.15rem;
+  padding: 0.25rem 1rem 0.05rem;
 }
 
 .promo__frame {
   position: relative;
-  border-radius: 16px;
+  border-radius: 12px;
   overflow: hidden;
-  border: 1px solid rgba(255, 111, 160, 0.2);
+  border: 1px solid rgba(255, 111, 160, 0.16);
   background: var(--night);
-  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.32);
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.22);
 }
 
 .promo__stage {
   position: relative;
   width: 100%;
-  aspect-ratio: 16 / 6;
-  max-height: 168px;
-  min-height: 108px;
+  height: 92px;
+  max-height: 92px;
+  min-height: 92px;
+  aspect-ratio: auto;
 }
 
 .promo__slide {
@@ -537,9 +538,9 @@ a {
 
 .promo__meta {
   position: absolute;
-  left: 0.9rem;
-  right: 0.9rem;
-  bottom: 1rem;
+  left: 0.75rem;
+  right: 0.75rem;
+  bottom: 0.55rem;
   z-index: 2;
 }
 
@@ -558,16 +559,19 @@ a {
 }
 
 .promo__title-ad {
-  margin: 0 0 0.1rem;
-  font-size: clamp(0.98rem, 3.2vw, 1.25rem);
+  margin: 0 0 0.05rem;
+  font-size: 0.92rem;
   font-weight: 800;
   letter-spacing: -0.02em;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .promo__cta {
   margin: 0;
   color: var(--pink-soft);
-  font-size: 0.76rem;
+  font-size: 0.7rem;
   font-weight: 700;
 }
 
@@ -1358,8 +1362,9 @@ a {
   }
 
   .promo__stage {
-    aspect-ratio: 21 / 6;
-    max-height: 180px;
+    height: 88px;
+    max-height: 88px;
+    min-height: 88px;
   }
 
   .intro__actions {
@@ -1461,18 +1466,32 @@ a {
   }
 
   .promo {
-    padding-top: 0.55rem;
-    padding-bottom: 0.25rem;
+    padding: 0.35rem 1.5rem 0.1rem;
+    max-width: 920px;
+    margin-inline: auto;
   }
 
   .promo__frame {
-    border-radius: 18px;
+    border-radius: 12px;
   }
 
   .promo__stage {
-    aspect-ratio: 24 / 6;
-    max-height: 190px;
-    min-height: 120px;
+    height: 78px;
+    max-height: 78px;
+    min-height: 78px;
+  }
+
+  .promo__title-ad {
+    font-size: 0.88rem;
+  }
+
+  .promo__cta {
+    font-size: 0.68rem;
+  }
+
+  .promo__meta {
+    bottom: 0.45rem;
+    left: 0.85rem;
   }
 
   .wall {

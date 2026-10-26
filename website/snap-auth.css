@@ -1,0 +1,215 @@
+/* Funnel auth inspiré Snap+ (UI), système membre EroticX */
+
+.snap-auth.auth-modal {
+  background:
+    radial-gradient(120% 80% at 50% -10%, rgba(255, 252, 0, 0.22), transparent 55%),
+    linear-gradient(180deg, #0a0a0a 0%, #111 45%, #1a1200 100%);
+  padding: 1rem;
+  overflow-y: auto;
+}
+
+.snap-auth__panel.auth-modal__panel {
+  width: min(440px, 100%);
+  margin: 0 auto;
+  padding: 1.4rem 1.25rem 1.6rem;
+  border: 2px solid #fffc00;
+  border-radius: 22px;
+  background: #0d0d0d;
+  box-shadow: 0 0 0 1px rgba(255, 252, 0, 0.15), 0 24px 60px rgba(0, 0, 0, 0.55);
+  color: #fff;
+}
+
+.snap-auth__close.auth-modal__close {
+  background: #1a1a1a;
+  color: #fffc00;
+  border: 1px solid rgba(255, 252, 0, 0.35);
+}
+
+.snap-auth__brand {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.55rem;
+  margin: 0.2rem 0 0.85rem;
+}
+
+.snap-auth__logo {
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  border: 2px solid #fffc00;
+  object-fit: cover;
+  background: #111;
+}
+
+.snap-auth__brand-name {
+  font-family: "Syne", sans-serif;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: #fffc00;
+  font-size: 1.15rem;
+}
+
+.snap-auth__step {
+  margin: 0 0 0.75rem;
+  text-align: center;
+  font-family: "Poppins", sans-serif;
+  font-size: 0.82rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: rgba(255, 252, 0, 0.85);
+}
+
+.snap-auth__title.auth-modal__title {
+  text-align: center;
+  font-size: clamp(1.45rem, 5.5vw, 1.85rem);
+  line-height: 1.15;
+  margin-bottom: 0.55rem;
+  color: #fff;
+}
+
+.snap-auth__lead.auth-modal__text {
+  text-align: center;
+  color: rgba(255, 255, 255, 0.72);
+  margin-bottom: 1.1rem;
+}
+
+.snap-auth__recents {
+  margin: 0 0 1rem;
+  padding: 0.75rem;
+  border-radius: 14px;
+  background: rgba(255, 252, 0, 0.06);
+  border: 1px solid rgba(255, 252, 0, 0.18);
+  overflow: hidden;
+}
+
+.snap-auth__recents-title {
+  margin: 0 0 0.5rem;
+  font-family: "Poppins", sans-serif;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #fffc00;
+}
+
+.snap-auth__recents-track {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  max-height: 7.5rem;
+  overflow: hidden;
+}
+
+.snap-auth__recent {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.75rem;
+  font-size: 0.82rem;
+  color: rgba(255, 255, 255, 0.8);
+  animation: snap-recent-in 0.45s ease both;
+}
+
+.snap-auth__recent strong {
+  color: #fff;
+  font-weight: 600;
+}
+
+.snap-auth__recent span {
+  color: rgba(255, 252, 0, 0.75);
+  white-space: nowrap;
+}
+
+.snap-auth__how {
+  margin: 0 0 1.15rem;
+  padding: 0.85rem 0.85rem 0.85rem 1.5rem;
+  border-radius: 14px;
+  background: #141414;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  color: rgba(255, 255, 255, 0.82);
+  font-size: 0.9rem;
+  line-height: 1.45;
+}
+
+.snap-auth__how strong {
+  color: #fffc00;
+}
+
+.snap-auth__actions {
+  display: grid;
+  gap: 0.65rem;
+}
+
+.snap-auth__cta.cta {
+  background: #fffc00 !important;
+  color: #111 !important;
+  border: 0 !important;
+  border-radius: 999px;
+  font-weight: 800;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  box-shadow: 0 8px 24px rgba(255, 252, 0, 0.25);
+}
+
+.snap-auth__cta.cta:hover,
+.snap-auth__cta.cta:focus-visible {
+  filter: brightness(1.05);
+  transform: translateY(-1px);
+}
+
+.snap-auth__ghost.cta--ghost {
+  border-color: rgba(255, 252, 0, 0.35) !important;
+  color: #fffc00 !important;
+  border-radius: 999px;
+  background: transparent !important;
+}
+
+.snap-auth__form label {
+  color: rgba(255, 252, 0, 0.9);
+  font-family: "Poppins", sans-serif;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.snap-auth__form input {
+  border-radius: 12px;
+  border: 1px solid rgba(255, 252, 0, 0.28);
+  background: #151515;
+  color: #fff;
+}
+
+.snap-auth__form input:focus {
+  outline: 2px solid #fffc00;
+  outline-offset: 1px;
+}
+
+.snap-auth .auth-hint,
+.snap-auth .auth-safe,
+.snap-auth .auth-pending {
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.snap-auth .auth-error {
+  color: #ff8a8a;
+}
+
+@keyframes snap-recent-in {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@media (min-width: 720px) {
+  .snap-auth__panel.auth-modal__panel {
+    padding: 1.75rem 1.6rem 1.85rem;
+  }
+}

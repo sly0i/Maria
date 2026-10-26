@@ -1514,18 +1514,28 @@ function bustScriptUrls(html) {
   );
 }
 
+function inlineStylesheet(html, cssPath) {
+  const css = fs.readFileSync(cssPath, "utf8");
+  const cssName = path.basename(cssPath).replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  const linkRe = new RegExp(`<link\\s+rel="stylesheet"\\s+href="[^"]*${cssName}"\\s*/?>`, "i");
+  if (linkRe.test(html)) {
+    return html.replace(linkRe, `<style>\n${css}\n</style>`);
+  }
+  if (html.includes("</head>")) {
+    return html.replace("</head>", `<style>\n${css}\n</style>\n</head>`);
+  }
+  return html;
+}
+
 function sendHtmlWithInlineCss(res, htmlPath, cssPath = path.join(__dirname, "styles.css")) {
   try {
     let html = fs.readFileSync(htmlPath, "utf8");
-    const css = fs.readFileSync(cssPath, "utf8");
-    const cssName = path.basename(cssPath).replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
     // Inline CSS so mobile / Cloudflare tunnels never show a white unstyled page
     // if the separate stylesheet request is blocked or delayed.
-    const linkRe = new RegExp(`<link\\s+rel="stylesheet"\\s+href="[^"]*${cssName}"\\s*/?>`, "i");
-    if (linkRe.test(html)) {
-      html = html.replace(linkRe, `<style>\n${css}\n</style>`);
-    } else if (html.includes("</head>")) {
-      html = html.replace("</head>", `<style>\n${css}\n</style>\n</head>`);
+    html = inlineStylesheet(html, cssPath);
+    const snapAuthCss = path.join(__dirname, "snap-auth.css");
+    if (fs.existsSync(snapAuthCss) && html.includes("snap-auth.css")) {
+      html = inlineStylesheet(html, snapAuthCss);
     }
     // Inject admin brand (name/logo/texts) so age gate never flashes old placeholders
     if (htmlPath.endsWith("index.html") || htmlPath.endsWith("watch.html")) {
@@ -1564,6 +1574,12 @@ app.get("/styles.css", (_req, res) => {
   res.type("text/css");
   noCache(res);
   res.sendFile(path.join(__dirname, "styles.css"));
+});
+
+app.get("/snap-auth.css", (_req, res) => {
+  res.type("text/css");
+  noCache(res);
+  res.sendFile(path.join(__dirname, "snap-auth.css"));
 });
 
 app.get("/demo.css", (_req, res) => {

@@ -67,10 +67,14 @@
       loginForm: $("login-form"),
       loginBack: $("login-back"),
       loginError: $("login-error"),
+      pseudoForm: $("pseudo-form"),
       registerForm: $("register-form"),
       codeForm: $("code-form"),
       registerBack: $("register-back"),
+      pseudoError: $("pseudo-error"),
       registerError: $("register-error"),
+      stepLabel: $("snap-step"),
+      recents: $("snap-recents"),
       registerPending: $("register-pending"),
       registerRejected: $("register-rejected"),
       registerRejectedText: $("register-rejected-text"),
@@ -106,14 +110,41 @@
       setHidden(els.register, name !== "register");
     }
 
-    function resetRegisterStep(step = "form") {
-      setHidden(els.registerForm, step !== "form");
+    function setStep(n, total = 3) {
+      if (els.stepLabel) els.stepLabel.textContent = `Étape ${n} / ${total}`;
+    }
+
+    function fillRecents() {
+      if (!els.recents || els.recents.dataset.ready === "1") return;
+      const names = ["lea_x", "noah92", "maya.off", "kilian", "zoe.m", "ryan__", "nina.k", "tom.v"];
+      const times = ["30s", "1m", "2m", "4m", "5m", "8m", "12m", "15m"];
+      els.recents.innerHTML = names
+        .map(
+          (n, i) =>
+            `<div class="snap-auth__recent"><strong>${n}</strong><span>inscrit · ${times[i]}</span></div>`
+        )
+        .join("");
+      els.recents.dataset.ready = "1";
+    }
+
+    function resetRegisterStep(step = "pseudo") {
+      // map legacy "form" (username+phone) to phone step after pseudo exists
+      if (step === "form") step = "pseudo";
+      setHidden(els.pseudoForm, step !== "pseudo");
+      setHidden(els.registerForm, step !== "phone");
       setHidden(els.codeForm, step !== "code");
       setHidden(els.registerPending, step !== "pending");
       setHidden(els.registerRejected, step !== "rejected");
       setHidden(els.registerBanned, step !== "banned");
+      setText(els.pseudoError, "", true);
       setText(els.registerError, "", true);
       setText(els.retryPhoneError, "", true);
+
+      if (step === "pseudo") setStep(1);
+      else if (step === "phone") setStep(2);
+      else if (step === "code") setStep(3);
+      else if (step === "pending") setStep(3);
+      else if (els.stepLabel) els.stepLabel.textContent = "Compte";
 
       if (step === "rejected" && els.registerRejectedText) {
         els.registerRejectedText.textContent = rejectedCopy(member);
@@ -171,20 +202,23 @@
       else if (member?.status === "rejected") resetRegisterStep("rejected");
       else if (member?.status === "pending") resetRegisterStep("pending");
       else if (member?.status === "awaiting_code") resetRegisterStep("code");
-      else resetRegisterStep("form");
+      else resetRegisterStep("pseudo");
     }
 
     function openModal(section = "choice") {
       if (!els.modal) return;
       els.modal.hidden = false;
       document.body.classList.add("auth-open");
+      fillRecents();
       showSection(section);
+      if (section === "choice") setStep(1);
+      if (section === "login") setStep(1, 2);
       if (section === "register") {
         if (member?.status === "banned") resetRegisterStep("banned");
         else if (member?.status === "rejected") resetRegisterStep("rejected");
         else if (member?.status === "pending") resetRegisterStep("pending");
         else if (member?.status === "awaiting_code") resetRegisterStep("code");
-        else resetRegisterStep("form");
+        else resetRegisterStep("pseudo");
       }
     }
 
@@ -226,15 +260,34 @@
       if (event.target === els.modal) closeModal();
     });
 
-    els.gotoLogin?.addEventListener("click", () => showSection("login"));
+    els.gotoLogin?.addEventListener("click", () => {
+      showSection("login");
+      setStep(1, 2);
+    });
     els.gotoRegister?.addEventListener("click", () => {
       showSection("register");
       if (member?.status === "banned") resetRegisterStep("banned");
       else if (member?.status === "rejected") resetRegisterStep("rejected");
-      else resetRegisterStep("form");
+      else resetRegisterStep("pseudo");
     });
-    els.loginBack?.addEventListener("click", () => showSection("choice"));
-    els.registerBack?.addEventListener("click", () => showSection("choice"));
+    els.loginBack?.addEventListener("click", () => {
+      showSection("choice");
+      setStep(1);
+    });
+    els.registerBack?.addEventListener("click", () => {
+      const phoneVisible = els.registerForm && !els.registerForm.hidden;
+      const codeVisible = els.codeForm && !els.codeForm.hidden;
+      if (codeVisible) {
+        resetRegisterStep("phone");
+        return;
+      }
+      if (phoneVisible) {
+        resetRegisterStep("pseudo");
+        return;
+      }
+      showSection("choice");
+      setStep(1);
+    });
     els.openBtn?.addEventListener("click", () => {
       if (
         member?.status === "pending" ||
@@ -300,6 +353,17 @@
         }
         setText(els.loginError, err.message);
       }
+    });
+
+    els.pseudoForm?.addEventListener("submit", (event) => {
+      event.preventDefault();
+      setText(els.pseudoError, "", true);
+      const username = String($("register-username")?.value || "").trim();
+      if (!/^[A-Za-z0-9._-]{3,24}$/.test(username)) {
+        setText(els.pseudoError, "Pseudo invalide (3–24 caractères : lettres, chiffres, . _ -)");
+        return;
+      }
+      resetRegisterStep("phone");
     });
 
     els.registerForm?.addEventListener("submit", async (event) => {

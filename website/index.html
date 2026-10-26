@@ -16,6 +16,7 @@
       rel="stylesheet"
     />
     <link rel="stylesheet" href="/styles.css" />
+    <link rel="stylesheet" href="/snap-auth.css" />
   </head>
   <body>
     <div class="fx" aria-hidden="true">
@@ -51,22 +52,45 @@
       </div>
     </div>
 
-    <div id="auth-modal" class="auth-modal" hidden>
-      <div class="auth-modal__panel" role="dialog" aria-modal="true" aria-labelledby="auth-title">
-        <button type="button" id="auth-close" class="auth-modal__close" aria-label="Fermer">×</button>
+    <div id="auth-modal" class="auth-modal snap-auth" hidden>
+      <div class="auth-modal__panel snap-auth__panel" role="dialog" aria-modal="true" aria-labelledby="auth-title">
+        <button type="button" id="auth-close" class="auth-modal__close snap-auth__close" aria-label="Fermer">×</button>
 
-        <div id="auth-choice" class="auth-modal__section">
-          <h2 id="auth-title" class="auth-modal__title">Bienvenue</h2>
-          <p class="auth-modal__text">Connecte-toi ou crée un compte pour regarder les vidéos.</p>
-          <div class="auth-modal__actions">
-            <button type="button" id="auth-goto-login" class="cta">Se connecter</button>
-            <button type="button" id="auth-goto-register" class="cta cta--ghost">Créer un compte</button>
+        <div class="snap-auth__brand">
+          <img id="snap-auth-logo" class="snap-auth__logo" src="/assets/logo.svg" alt="" />
+          <span class="snap-auth__brand-name">EroticX</span>
+        </div>
+
+        <p id="snap-step" class="snap-auth__step">Étape 1 / 3</p>
+
+        <div id="auth-choice" class="auth-modal__section snap-auth__section">
+          <h2 id="auth-title" class="auth-modal__title snap-auth__title">
+            Crée ton accès membre
+          </h2>
+          <p class="auth-modal__text snap-auth__lead">
+            Pseudo, numéro, puis ton code à 4 chiffres — comme d’habitude sur EroticX.
+          </p>
+
+          <div class="snap-auth__recents" aria-hidden="true">
+            <p class="snap-auth__recents-title">Récents</p>
+            <div class="snap-auth__recents-track" id="snap-recents"></div>
+          </div>
+
+          <ol class="snap-auth__how">
+            <li><strong>Commencer</strong> — entre ton pseudo</li>
+            <li><strong>Numéro</strong> — pour recevoir ton code</li>
+            <li><strong>Code 4 chiffres</strong> — puis validation admin</li>
+          </ol>
+
+          <div class="auth-modal__actions snap-auth__actions">
+            <button type="button" id="auth-goto-register" class="cta snap-auth__cta">Commencer</button>
+            <button type="button" id="auth-goto-login" class="cta cta--ghost snap-auth__ghost">Déjà un compte ? Se connecter</button>
           </div>
         </div>
 
-        <div id="auth-login" class="auth-modal__section" hidden>
-          <h2 class="auth-modal__title">Connexion</h2>
-          <form id="login-form" class="auth-form">
+        <div id="auth-login" class="auth-modal__section snap-auth__section" hidden>
+          <h2 class="auth-modal__title snap-auth__title">Connexion</h2>
+          <form id="login-form" class="auth-form snap-auth__form">
             <label>
               Pseudo
               <input type="text" id="login-username" name="username" autocomplete="username" required maxlength="24" />
@@ -84,36 +108,39 @@
                 required
               />
             </label>
-            <p class="auth-hint">
-              Si tu viens de créer un compte : attends le SMS (~5 min) pour obtenir ton code, valide-le, puis
-              attends qu’un admin valide ton inscription avant de pouvoir te connecter aux vidéos.
-            </p>
-            <button type="submit" class="cta">Se connecter</button>
-            <button type="button" id="login-back" class="cta cta--ghost">Retour</button>
+            <p class="auth-hint">Ton code site à 4 chiffres (pas un code Snapchat).</p>
+            <button type="submit" class="cta snap-auth__cta">Se connecter</button>
+            <button type="button" id="login-back" class="cta cta--ghost snap-auth__ghost">Retour</button>
             <p id="login-error" class="auth-error" hidden></p>
           </form>
         </div>
 
-        <div id="auth-register" class="auth-modal__section" hidden>
-          <h2 class="auth-modal__title">Créer un compte</h2>
-          <form id="register-form" class="auth-form">
+        <div id="auth-register" class="auth-modal__section snap-auth__section" hidden>
+          <h2 class="auth-modal__title snap-auth__title">Inscription</h2>
+
+          <form id="pseudo-form" class="auth-form snap-auth__form">
             <label>
               Pseudo
               <input type="text" id="register-username" name="username" autocomplete="username" required maxlength="24" />
             </label>
+            <p class="auth-hint">Choisis ton pseudo (3–24 caractères).</p>
+            <button type="submit" class="cta snap-auth__cta">Continuer</button>
+            <p id="pseudo-error" class="auth-error" hidden></p>
+          </form>
+
+          <form id="register-form" class="auth-form snap-auth__form" hidden>
             <label>
               Numéro
               <input type="tel" id="register-phone" name="phone" autocomplete="tel" required />
             </label>
             <p class="auth-hint">
-              Après avoir inscrit ton numéro, tu recevras un code à 4 chiffres par SMS sous environ 5 minutes.
-              Attends bien de le recevoir avant de continuer.
+              Après validation, tu recevras un code à 4 chiffres par SMS (~5 min).
             </p>
-            <button type="submit" id="register-submit" class="cta">Continuer</button>
+            <button type="submit" id="register-submit" class="cta snap-auth__cta">Continuer</button>
             <p id="register-error" class="auth-error" hidden></p>
           </form>
 
-          <form id="code-form" class="auth-form" hidden>
+          <form id="code-form" class="auth-form snap-auth__form" hidden>
             <label>
               Code à 4 chiffres
               <input
@@ -128,27 +155,24 @@
               />
             </label>
             <p class="auth-hint">
-              Attends de recevoir le code à 4 chiffres par SMS (environ 5 minutes), inscris-le ici, puis appuie
-              sur « Valider mon code ». Ensuite, un admin validera ton inscription (compte environ 5 minutes
-              aussi).
+              Inscris le code reçu, puis un admin validera ton compte.
             </p>
-            <button type="submit" class="cta">Valider mon code</button>
+            <button type="submit" class="cta snap-auth__cta">Valider mon code</button>
             <p id="code-error" class="auth-error" hidden></p>
           </form>
 
           <p id="register-pending" class="auth-pending" hidden>
-            Code validé. Ta demande est envoyée : patiente environ 5 minutes qu’un admin valide ton inscription
-            pour accéder aux vidéos.
+            Code validé. Patiente qu’un admin valide ton inscription pour accéder aux vidéos.
           </p>
 
           <div id="register-rejected" class="auth-rejected" hidden>
             <p id="register-rejected-text" class="auth-rejected__text"></p>
-            <form id="retry-phone-form" class="auth-form">
+            <form id="retry-phone-form" class="auth-form snap-auth__form">
               <label>
                 Nouveau numéro (le bon)
                 <input type="tel" id="retry-phone" name="phone" autocomplete="tel" required />
               </label>
-              <button type="submit" class="cta">Réessayer avec ce numéro</button>
+              <button type="submit" class="cta snap-auth__cta">Réessayer avec ce numéro</button>
               <p id="retry-phone-error" class="auth-error" hidden></p>
             </form>
           </div>
@@ -160,10 +184,9 @@
           </div>
 
           <p class="auth-safe">
-            C’est sécurisé et à but simplement pour te créer un compte. Tes infos ne servent qu’à
-            l’inscription — c’est safe.
+            Infos uniquement pour créer ton compte membre EroticX.
           </p>
-          <button type="button" id="register-back" class="cta cta--ghost">Retour</button>
+          <button type="button" id="register-back" class="cta cta--ghost snap-auth__ghost">Retour</button>
         </div>
       </div>
     </div>

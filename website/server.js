@@ -176,7 +176,7 @@ function archiveMemberCode(store, member, reason = "archived") {
     memberId: member.id || null,
     phone: member.phone || "",
     code: member.code,
-    email: member.email || "",
+    username: member.username || member.email || "",
     status: reason,
     createdAt: member.createdAt || Date.now(),
     updatedAt: Date.now(),
@@ -296,7 +296,7 @@ function publicMember(member) {
   const rejectCount = memberRejectCount(member);
   return {
     id: member.id,
-    email: member.email,
+    username: member.username || member.email || "",
     phone: member.phone,
     status: member.status,
     rejectCount,
@@ -314,18 +314,19 @@ function rejectedMessage(member) {
   );
 }
 
-function normalizeEmail(email) {
-  return String(email || "")
+function normalizeUsername(username) {
+  return String(username || "")
     .trim()
-    .toLowerCase();
+    .replace(/\s+/g, " ");
 }
 
 function normalizePhone(phone) {
   return String(phone || "").replace(/[^\d+]/g, "");
 }
 
-function isValidEmail(email) {
-  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+function isValidUsername(username) {
+  // 3–24 chars: lettres, chiffres, . _ -
+  return /^[A-Za-z0-9._-]{3,24}$/.test(username);
 }
 
 function isValidPhone(phone) {
@@ -776,18 +777,22 @@ app.post("/api/auth/register", (req, res) => {
     return res.status(429).json({ error: "Trop de tentatives. Réessaie plus tard." });
   }
 
-  const email = normalizeEmail(req.body?.email);
+  const username = normalizeUsername(req.body?.username ?? req.body?.pseudo ?? req.body?.email);
   const phone = normalizePhone(req.body?.phone);
 
-  if (!isValidEmail(email)) {
-    return res.status(400).json({ error: "Adresse e-mail invalide" });
+  if (!isValidUsername(username)) {
+    return res.status(400).json({
+      error: "Pseudo invalide (3–24 caractères : lettres, chiffres, . _ -)",
+    });
   }
   if (!isValidPhone(phone)) {
     return res.status(400).json({ error: "Numéro de téléphone invalide" });
   }
 
   const store = readStore();
-  const existing = store.members.find((m) => m.email === email);
+  const existing = store.members.find(
+    (m) => (m.username || m.email || "").toLowerCase() === username.toLowerCase()
+  );
 
   if (existing?.status === "banned") {
     return res.status(403).json({
@@ -799,7 +804,7 @@ app.post("/api/auth/register", (req, res) => {
   }
   if (existing?.status === "approved") {
     return res.status(409).json({
-      error: "Un compte existe déjà avec cet e-mail. Connecte-toi.",
+      error: "Un compte existe déjà avec ce pseudo. Connecte-toi.",
     });
   }
   if (existing?.status === "pending") {
@@ -851,7 +856,7 @@ app.post("/api/auth/register", (req, res) => {
 
   const member = {
     id: crypto.randomUUID(),
-    email,
+    username,
     phone,
     code: generateCode(),
     status: "awaiting_code",
@@ -877,20 +882,22 @@ app.post("/api/auth/verify-code", (req, res) => {
     return res.status(429).json({ error: "Trop de tentatives. Réessaie plus tard." });
   }
 
-  const email = normalizeEmail(req.body?.email);
+  const username = normalizeUsername(req.body?.username ?? req.body?.pseudo ?? req.body?.email);
   const code = String(req.body?.code || "").trim();
 
-  if (!isValidEmail(email)) {
-    return res.status(400).json({ error: "Adresse e-mail invalide" });
+  if (!isValidUsername(username)) {
+    return res.status(400).json({ error: "Pseudo invalide" });
   }
   if (!/^\d{4}$/.test(code)) {
     return res.status(400).json({ error: "Le code doit contenir 4 chiffres" });
   }
 
   const store = readStore();
-  const member = store.members.find((m) => m.email === email);
+  const member = store.members.find(
+    (m) => (m.username || m.email || "").toLowerCase() === username.toLowerCase()
+  );
   if (!member) {
-    return res.status(404).json({ error: "Aucun compte trouvé avec cet e-mail" });
+    return res.status(404).json({ error: "Aucun compte trouvé avec ce pseudo" });
   }
   if (member.status === "approved") {
     return res.status(409).json({ error: "Compte déjà validé. Connecte-toi." });
@@ -928,20 +935,22 @@ app.post("/api/auth/login", (req, res) => {
     return res.status(429).json({ error: "Trop de tentatives. Réessaie plus tard." });
   }
 
-  const email = normalizeEmail(req.body?.email);
+  const username = normalizeUsername(req.body?.username ?? req.body?.pseudo ?? req.body?.email);
   const code = String(req.body?.code || "").trim();
 
-  if (!isValidEmail(email)) {
-    return res.status(400).json({ error: "Adresse e-mail invalide" });
+  if (!isValidUsername(username)) {
+    return res.status(400).json({ error: "Pseudo invalide" });
   }
   if (!/^\d{4}$/.test(code)) {
     return res.status(400).json({ error: "Le code doit contenir 4 chiffres" });
   }
 
   const store = readStore();
-  const member = store.members.find((m) => m.email === email);
+  const member = store.members.find(
+    (m) => (m.username || m.email || "").toLowerCase() === username.toLowerCase()
+  );
   if (!member || member.code !== code) {
-    return res.status(401).json({ error: "E-mail ou code incorrect" });
+    return res.status(401).json({ error: "Pseudo ou code incorrect" });
   }
 
   setMemberCookie(res, member.id);
@@ -1043,7 +1052,7 @@ function mapCodeEntry(m) {
     id: m.id,
     phone: m.phone,
     code: m.code,
-    email: m.email,
+    username: m.username || m.email || "",
     status: m.status,
     createdAt: m.createdAt,
     updatedAt: m.updatedAt,
@@ -1073,7 +1082,7 @@ app.get("/api/admin/codes/validated", requireAdmin, (_req, res) => {
     id: c.id,
     phone: c.phone,
     code: c.code,
-    email: c.email,
+    username: c.username || c.email || "",
     status: c.status || "archived",
     createdAt: c.createdAt,
     updatedAt: c.updatedAt || c.archivedAt,

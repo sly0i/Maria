@@ -198,7 +198,7 @@
       row.className = "member-card";
       row.innerHTML = `
         <div class="member-card__info">
-          <strong class="member-card__email"></strong>
+          <strong class="member-card__username"></strong>
           <span class="member-card__phone"></span>
           <span class="member-card__status"></span>
         </div>
@@ -207,7 +207,7 @@
           <button type="button" class="btn btn--danger" data-action="reject">Refuser</button>
         </div>
       `;
-      row.querySelector(".member-card__email").textContent = member.email;
+      row.querySelector(".member-card__username").textContent = member.username;
       row.querySelector(".member-card__phone").textContent = member.phone;
       row.querySelector(".member-card__status").textContent = statusLabel(member.status, member);
 
@@ -239,8 +239,8 @@
         const leftAfter = Math.max(0, (Number(member.attemptsLeft) || 3) - 1);
         const warn =
           leftAfter <= 0
-            ? `Refuser ${member.email} ? Ce sera le dernier essai → ban définitif.`
-            : `Refuser ${member.email} pour numéro incorrect ? Il lui restera ${leftAfter} essai(s).`;
+            ? `Refuser ${member.username} ? Ce sera le dernier essai → ban définitif.`
+            : `Refuser ${member.username} pour numéro incorrect ? Il lui restera ${leftAfter} essai(s).`;
         if (!confirm(warn)) return;
         try {
           const data = await api(`/api/admin/members/${member.id}/reject`, {
@@ -268,13 +268,13 @@
       <div class="code-card__phone"></div>
       <div class="code-card__code"></div>
       <div class="code-card__meta">
-        <span class="code-card__email"></span>
+        <span class="code-card__username"></span>
         <span class="code-card__status"></span>
       </div>
     `;
     row.querySelector(".code-card__phone").textContent = entry.phone;
     row.querySelector(".code-card__code").textContent = entry.code;
-    row.querySelector(".code-card__email").textContent = entry.email;
+    row.querySelector(".code-card__username").textContent = entry.username;
     row.querySelector(".code-card__status").textContent = statusText;
     return row;
   }

@@ -262,7 +262,7 @@
         const data = await api("/api/auth/login", {
           method: "POST",
           body: JSON.stringify({
-            email: $("login-email").value,
+            username: $("login-username").value,
             code: $("login-code").value,
           }),
         });
@@ -281,7 +281,7 @@
         if (data.step === "code") {
           showSection("register");
           resetRegisterStep("code");
-          if ($("register-email")) $("register-email").value = $("login-email").value;
+          if ($("register-username")) $("register-username").value = $("login-username").value;
         }
       } catch (err) {
         if (err.data?.step === "rejected" || err.data?.member?.status === "rejected") {
@@ -309,7 +309,7 @@
         const data = await api("/api/auth/register", {
           method: "POST",
           body: JSON.stringify({
-            email: $("register-email").value,
+            username: $("register-username").value,
             phone: $("register-phone").value,
           }),
         });
@@ -336,21 +336,21 @@
     els.retryPhoneForm?.addEventListener("submit", async (event) => {
       event.preventDefault();
       setText(els.retryPhoneError, "", true);
-      if (!member?.email) {
-        setText(els.retryPhoneError, "Reconnecte-toi avec ton e-mail pour réessayer.");
+      if (!member?.username) {
+        setText(els.retryPhoneError, "Reconnecte-toi avec ton pseudo pour réessayer.");
         return;
       }
       try {
         const data = await api("/api/auth/register", {
           method: "POST",
           body: JSON.stringify({
-            email: member.email,
+            username: member.username,
             phone: els.retryPhone?.value,
           }),
         });
         member = data.member;
         updateChrome();
-        if ($("register-email")) $("register-email").value = member.email || "";
+        if ($("register-username")) $("register-username").value = member.username || "";
         resetRegisterStep("code");
       } catch (err) {
         if (err.data?.step === "banned" || err.data?.member?.status === "banned") {
@@ -372,7 +372,7 @@
         const data = await api("/api/auth/verify-code", {
           method: "POST",
           body: JSON.stringify({
-            email: $("register-email").value || member?.email,
+            username: $("register-username").value || member?.username,
             code: codeInput?.value,
           }),
         });

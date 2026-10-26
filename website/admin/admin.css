@@ -348,7 +348,7 @@ input[type="file"] {
   gap: 0.25rem;
 }
 
-.member-card__email,
+.member-card__username,
 .code-card__phone {
   font-family: var(--font-display);
   font-weight: 700;
@@ -357,7 +357,7 @@ input[type="file"] {
 
 .member-card__phone,
 .member-card__status,
-.code-card__email,
+.code-card__username,
 .code-card__status {
   color: var(--mist);
   font-size: 0.95rem;
